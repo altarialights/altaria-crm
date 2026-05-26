@@ -3,14 +3,13 @@ import { randomUUID } from "node:crypto";
 import { getDbConfig } from "./_env.mjs";
 import { hashPassword } from "./_password.mjs";
 
-const [, , emailRaw, nameRaw, password, roleRaw = "member"] = process.argv;
+const [, , usernameRaw, nameRaw, password] = process.argv;
 
-const email = String(emailRaw || "").trim().toLowerCase();
+const username = String(usernameRaw || "").trim();
 const name = String(nameRaw || "").trim();
-const role = roleRaw === "admin" ? "admin" : "member";
 
-if (!email || !name || !password) {
-  console.error('Uso: pnpm user:create usuario@empresa.com "Nombre Usuario" "password-segura" admin');
+if (!username || !name || !password) {
+  console.error('Uso: pnpm user:create usuario "Nombre Usuario" "password-segura"');
   process.exit(1);
 }
 
@@ -19,15 +18,43 @@ const id = randomUUID();
 const now = new Date().toISOString();
 const passwordHash = hashPassword(password);
 
+const tableInfo = await db.execute("PRAGMA table_info(users)");
+const columns = new Set(tableInfo.rows.map((row) => String(row.name || "")));
+
+if (!columns.has("username")) {
+  await db.execute("ALTER TABLE users ADD COLUMN username TEXT");
+
+  if (columns.has("email")) {
+    await db.execute(`
+      UPDATE users
+      SET username = lower(email)
+      WHERE username IS NULL OR trim(username) = ''
+    `);
+  }
+}
+
+await db.execute(
+  "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_nocase ON users(username COLLATE NOCASE)",
+);
+
+const fields = ["id", "username", "name", "password_hash", "is_active", "created_at", "updated_at"];
+const placeholders = ["?", "?", "?", "?", "1", "?", "?"];
+const args = [id, username, name, passwordHash, now, now];
+
+if (columns.has("email")) {
+  fields.splice(2, 0, "email");
+  placeholders.splice(2, 0, "?");
+  args.splice(2, 0, username);
+}
+
 await db.execute({
   sql: `
-    INSERT INTO users (id, email, name, role, password_hash, is_active, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, 1, ?, ?)
+    INSERT INTO users (${fields.join(", ")})
+    VALUES (${placeholders.join(", ")})
   `,
-  args: [id, email, name, role, passwordHash, now, now],
+  args,
 });
 
 console.log("Usuario creado correctamente:");
 console.log(`ID: ${id}`);
-console.log(`Email: ${email}`);
-console.log(`Rol: ${role}`);
+console.log(`Usuario: ${username}`);

@@ -11,4 +11,4 @@ await db.executeMultiple(schema);
 await db.executeMultiple(seed);
 
 console.log("Base de datos inicializada correctamente.");
-console.log("Usuario inicial: admin@crm.local / admin1234");
+console.log("Crea usuarios con pnpm user:create.");

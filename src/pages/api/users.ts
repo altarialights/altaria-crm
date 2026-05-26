@@ -1,12 +1,13 @@
 import type { APIRoute } from "astro";
-import { getDb } from "../../lib/db";
+import { ensureUserAuthSchema, getDb } from "../../lib/db";
 import { json, serverError } from "../../lib/http";
 
 export const GET: APIRoute = async () => {
   try {
     const db = getDb();
+    await ensureUserAuthSchema(db);
     const result = await db.execute(`
-      SELECT id, email, name, role, is_active, created_at
+      SELECT id, username, name, is_active, created_at
       FROM users
       ORDER BY name ASC
     `);

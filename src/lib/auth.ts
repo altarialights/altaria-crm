@@ -1,14 +1,13 @@
 import { jwtVerify, SignJWT } from "jose";
-import { getDb, rowToObject } from "./db";
+import { ensureUserAuthSchema, getDb, rowToObject } from "./db";
 
 export const AUTH_COOKIE = "altaria_crm_session";
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
 
 export type SessionUser = {
   id: string;
-  email: string;
+  username: string;
   name: string;
-  role: "admin" | "member";
 };
 
 type JwtPayload = SessionUser & {
@@ -16,7 +15,12 @@ type JwtPayload = SessionUser & {
 };
 
 function getJwtSecret(): Uint8Array {
-  const secret = import.meta.env.JWT_SECRET || "dev-secret-change-me-please-32-characters-minimum";
+  const secret = import.meta.env.JWT_SECRET;
+
+  if (!secret) {
+    throw new Error("Falta JWT_SECRET en las variables de entorno.");
+  }
+
   return new TextEncoder().encode(secret);
 }
 
@@ -34,13 +38,13 @@ export async function verifySessionToken(token: string): Promise<SessionUser | n
 
     if (payload.typ !== "session") return null;
     if (typeof payload.id !== "string") return null;
-    if (typeof payload.email !== "string") return null;
+    if (typeof payload.username !== "string") return null;
     if (typeof payload.name !== "string") return null;
-    if (payload.role !== "admin" && payload.role !== "member") return null;
 
     const db = getDb();
+    await ensureUserAuthSchema(db);
     const result = await db.execute({
-      sql: "SELECT id, email, name, role FROM users WHERE id = ? AND is_active = 1 LIMIT 1",
+      sql: "SELECT id, username, name FROM users WHERE id = ? AND is_active = 1 LIMIT 1",
       args: [payload.id],
     });
 

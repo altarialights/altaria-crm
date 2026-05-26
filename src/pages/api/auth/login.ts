@@ -1,24 +1,25 @@
 import type { APIRoute } from "astro";
 import { AUTH_COOKIE, createSessionToken, getSecureCookieFlag, SESSION_TTL_SECONDS } from "../../../lib/auth";
-import { getDb, rowToObject } from "../../../lib/db";
+import { ensureUserAuthSchema, getDb, rowToObject } from "../../../lib/db";
 import { verifyPassword } from "../../../lib/password";
 import { badRequest, json, readJson, serverError } from "../../../lib/http";
 
-type LoginBody = { email?: string; password?: string };
-type UserRow = { id: string; email: string; name: string; role: "admin" | "member"; password_hash: string; is_active: number };
+type LoginBody = { username?: string; password?: string };
+type UserRow = { id: string; username: string; name: string; password_hash: string; is_active: number };
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const body = await readJson<LoginBody>(request);
-    const email = String(body.email || "").trim().toLowerCase();
+    const username = String(body.username || "").trim();
     const password = String(body.password || "");
 
-    if (!email || !password) return badRequest("Email y contraseña son obligatorios");
+    if (!username || !password) return badRequest("Usuario y contraseña son obligatorios");
 
     const db = getDb();
+    await ensureUserAuthSchema(db);
     const result = await db.execute({
-      sql: "SELECT id, email, name, role, password_hash, is_active FROM users WHERE lower(email) = lower(?) LIMIT 1",
-      args: [email],
+      sql: "SELECT id, username, name, password_hash, is_active FROM users WHERE lower(username) = lower(?) LIMIT 1",
+      args: [username],
     });
 
     const user = result.rows[0] ? rowToObject<UserRow>(result.rows[0]) : null;
@@ -26,7 +27,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       return json({ ok: false, error: "Credenciales incorrectas" }, { status: 401 });
     }
 
-    const token = await createSessionToken({ id: user.id, email: user.email, name: user.name, role: user.role });
+    const token = await createSessionToken({ id: user.id, username: user.username, name: user.name });
 
     cookies.set(AUTH_COOKIE, token, {
       httpOnly: true,

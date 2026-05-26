@@ -14,7 +14,6 @@ const navItems = [
   { key: "clients", label: "Clientes", href: "/clientes" },
   { key: "tasks", label: "Tareas", href: "/tareas" },
   { key: "financial", label: "Economía", href: "/economia" },
-  { key: "users", label: "Usuarios", href: "/usuarios" },
 ];
 ---
 
@@ -70,12 +69,7 @@ const navItems = [
       >
         <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-[0_0_28px_rgba(82,51,255,0.16)] backdrop-blur">
           <p class="text-sm font-semibold">{user?.name}</p>
-          <p class="mt-1 truncate text-xs text-white/50">{user?.email}</p>
-          <p
-            class="mt-2 inline-flex rounded-full bg-brand-500/15 px-2 py-1 text-[11px] font-semibold text-brand-100 ring-1 ring-brand-400/30"
-          >
-            {user?.role}
-          </p>
+          <p class="mt-1 truncate text-xs text-white/50">{user?.username}</p>
           <form method="post" action="/api/auth/logout" class="mt-4">
             <button
               class="w-full rounded-xl bg-gradient-to-r from-[var(--altaria-cyan)] to-brand-500 px-3 py-2 text-sm font-bold text-white shadow-[0_0_20px_rgba(6,203,173,0.22)] transition hover:scale-[1.01]"
@@ -111,7 +105,7 @@ const navItems = [
             </div>
             <div>
               <p class="text-sm font-bold text-white">{user?.name}</p>
-              <p class="text-xs text-white/50">{user?.role}</p>
+              <p class="text-xs text-white/50">{user?.username}</p>
             </div>
           </div>
         </div>

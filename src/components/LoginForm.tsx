@@ -4,8 +4,8 @@ import { api } from "./api";
 type LoginResponse = { ok: true };
 
 export default function LoginForm() {
-  const [email, setEmail] = useState("admin@crm.local");
-  const [password, setPassword] = useState("admin1234");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +17,7 @@ export default function LoginForm() {
     try {
       await api<LoginResponse>("/api/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       const params = new URLSearchParams(window.location.search);
@@ -38,13 +38,13 @@ export default function LoginForm() {
       ) : null}
 
       <label className="block space-y-2">
-        <span className="field-label">Email</span>
+        <span className="field-label">Usuario</span>
         <input
           className="field-input"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          type="text"
+          autoComplete="username"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
           required
         />
       </label>

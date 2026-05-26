@@ -7,7 +7,6 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "db:init": "node scripts/init-db.mjs",
     "user:create": "node scripts/create-user.mjs",
     "user:password": "node scripts/hash-password.mjs"
   },

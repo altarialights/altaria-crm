@@ -4,6 +4,8 @@ import path from "node:path";
 
 let client: Client | null = null;
 let dotEnvLoaded = false;
+let clientTrackingSchemaReady: Promise<void> | null = null;
+let userAuthSchemaReady: Promise<void> | null = null;
 
 type RequiredEnvName = "TURSO_DATABASE_URL" | "TURSO_AUTH_TOKEN";
 
@@ -94,6 +96,87 @@ export function getDb(): Client {
   });
 
   return client;
+}
+
+export async function ensureClientTrackingSchema(db = getDb()): Promise<void> {
+  if (clientTrackingSchemaReady) {
+    return clientTrackingSchemaReady;
+  }
+
+  clientTrackingSchemaReady = (async () => {
+    const tableInfo = await db.execute("PRAGMA table_info(clients)");
+    const existingColumns = new Set(
+      tableInfo.rows.map((row) => String((row as { name?: unknown }).name || "")),
+    );
+
+    const columns = [
+      {
+        name: "contact_status",
+        sql: `
+          ALTER TABLE clients
+          ADD COLUMN contact_status TEXT NOT NULL DEFAULT 'not_contacted'
+          CHECK (contact_status IN ('not_contacted', 'contacted', 'responded', 'no_response', 'not_interested'))
+        `,
+      },
+      {
+        name: "contacted_at",
+        sql: "ALTER TABLE clients ADD COLUMN contacted_at TEXT",
+      },
+      {
+        name: "contact_response",
+        sql: "ALTER TABLE clients ADD COLUMN contact_response TEXT",
+      },
+    ];
+
+    for (const column of columns) {
+      if (!existingColumns.has(column.name)) {
+        await db.execute(column.sql);
+      }
+    }
+
+    await db.execute(
+      "CREATE INDEX IF NOT EXISTS idx_clients_contact_status ON clients(contact_status)",
+    );
+  })().catch((error) => {
+    clientTrackingSchemaReady = null;
+    throw error;
+  });
+
+  return clientTrackingSchemaReady;
+}
+
+export async function ensureUserAuthSchema(db = getDb()): Promise<void> {
+  if (userAuthSchemaReady) {
+    return userAuthSchemaReady;
+  }
+
+  userAuthSchemaReady = (async () => {
+    const tableInfo = await db.execute("PRAGMA table_info(users)");
+    const existingColumns = new Set(
+      tableInfo.rows.map((row) => String((row as { name?: unknown }).name || "")),
+    );
+
+    if (!existingColumns.has("username")) {
+      await db.execute("ALTER TABLE users ADD COLUMN username TEXT");
+
+      if (existingColumns.has("email")) {
+        await db.execute(`
+          UPDATE users
+          SET username = lower(email)
+          WHERE username IS NULL OR trim(username) = ''
+        `);
+      }
+    }
+
+    await db.execute(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_nocase ON users(username COLLATE NOCASE)",
+    );
+  })().catch((error) => {
+    userAuthSchemaReady = null;
+    throw error;
+  });
+
+  return userAuthSchemaReady;
 }
 
 export function rowToObject<T>(row: unknown): T {

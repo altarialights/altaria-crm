@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { getDb, nowIso, uuid } from "../../../lib/db";
+import { ensureClientTrackingSchema, getDb, nowIso, uuid } from "../../../lib/db";
 import {
   badRequest,
   cleanString,
@@ -25,7 +25,23 @@ type ClientBody = {
   source?: string;
   owner_user_id?: string;
   notes?: string;
+  contact_status?: string;
+  contacted_at?: string;
+  contact_response?: string;
 };
+
+const allowedContactStatuses = new Set([
+  "not_contacted",
+  "contacted",
+  "responded",
+  "no_response",
+  "not_interested",
+]);
+
+function cleanContactStatus(value: unknown): string {
+  const status = cleanString(value || "not_contacted");
+  return allowedContactStatuses.has(status) ? status : "not_contacted";
+}
 
 function getLimit(url: URL, fallback: number, max: number): number {
   const raw = Number(url.searchParams.get("limit") ?? fallback);
@@ -42,6 +58,7 @@ export const GET: APIRoute = async ({ url }) => {
     const q = cleanString(url.searchParams.get("q")).toLowerCase();
     const mode = cleanString(url.searchParams.get("mode")).toLowerCase();
     const db = getDb();
+    await ensureClientTrackingSchema(db);
 
     if (mode === "options") {
       const limit = getLimit(url, 500, 2000);
@@ -86,6 +103,9 @@ export const GET: APIRoute = async ({ url }) => {
           c.source,
           c.owner_user_id,
           c.notes,
+          c.contact_status,
+          c.contacted_at,
+          c.contact_response,
           c.created_at,
           c.updated_at,
           u.name AS owner_name
@@ -119,6 +139,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const id = uuid();
     const now = nowIso();
     const db = getDb();
+    await ensureClientTrackingSchema(db);
     const ownerUserId = optionalString(body.owner_user_id) || locals.user?.id || null;
 
     await db.execute({
@@ -140,9 +161,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
           source,
           owner_user_id,
           notes,
+          contact_status,
+          contacted_at,
+          contact_response,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       args: [
         id,
@@ -161,6 +185,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
         optionalString(body.source),
         ownerUserId,
         optionalString(body.notes),
+        cleanContactStatus(body.contact_status),
+        optionalString(body.contacted_at),
+        optionalString(body.contact_response),
         now,
         now,
       ],
@@ -185,6 +212,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
           c.source,
           c.owner_user_id,
           c.notes,
+          c.contact_status,
+          c.contacted_at,
+          c.contact_response,
           c.created_at,
           c.updated_at,
           u.name AS owner_name

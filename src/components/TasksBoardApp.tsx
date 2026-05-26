@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 
-type User = { id: string; name: string; email: string };
+type User = { id: string; name: string; username: string };
 type Client = { id: string; name: string };
 
 type Task = {

@@ -7,31 +7,21 @@ CRM privado hecho con Astro + React + TailwindCSS + libSQL/Turso.
 - Node 20+
 - pnpm
 
-## Arranque local
+## Arranque
 
 ```bash
 pnpm install
-cp .env.example .env
-pnpm db:init
 pnpm dev
 ```
 
 Abre: `http://localhost:4321`
-
-Usuario inicial local:
-
-```txt
-Email: admin@crm.local
-Password: admin1234
-```
 
 ## Crear usuarios privados
 
 No hay registro público. Crea usuarios desde terminal:
 
 ```bash
-pnpm user:create usuario@empresa.com "Nombre Usuario" "password-segura" admin
-pnpm user:create comercial@empresa.com "Comercial" "password-segura" member
+pnpm user:create usuario "Nombre Usuario" "password-segura"
 ```
 
 O genera solo el hash para insertarlo a mano en Turso:
@@ -42,7 +32,8 @@ pnpm user:password "password-segura"
 
 ## Turso
 
-Ejecuta `database/cloud.sql` en Turso para crear las tablas. Luego inserta usuarios en la tabla `users` con un hash generado mediante `pnpm user:password`.
+El comando `pnpm user:create` inserta el usuario en la base configurada en `.env`.
+Si `TURSO_DATABASE_URL` y `TURSO_AUTH_TOKEN` apuntan a producción, el usuario se crea directamente en Turso.
 
 Variables recomendadas en Vercel:
 

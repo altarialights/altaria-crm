@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, formatMoney } from "./api";
 
-type User = { id: string; name: string; email: string; role: string };
+type User = { id: string; name: string; username: string };
 
 type Contact = {
   id: string;
@@ -11,16 +11,6 @@ type Contact = {
   phone: string | null;
   is_primary: number;
   notes: string | null;
-};
-
-type Activity = {
-  id: string;
-  type: string;
-  title: string;
-  body: string | null;
-  due_date: string | null;
-  completed_at: string | null;
-  created_at: string;
 };
 
 type FinancialRecord = {
@@ -52,10 +42,12 @@ type Client = {
   owner_user_id: string | null;
   owner_name: string | null;
   notes: string | null;
+  contact_status: string | null;
+  contacted_at: string | null;
+  contact_response: string | null;
   created_at: string;
   updated_at?: string;
   contacts?: Contact[];
-  activities?: Activity[];
   financialRecords?: FinancialRecord[];
 };
 
@@ -81,6 +73,22 @@ const emptyClient = {
   notes: "",
 };
 
+const contactStatusLabels: Record<string, string> = {
+  not_contacted: "No contactado",
+  contacted: "Contactado",
+  responded: "Respondió",
+  no_response: "Sin respuesta",
+  not_interested: "No interesado",
+};
+
+const contactStatusClasses: Record<string, string> = {
+  not_contacted: "bg-white/5 text-white/70 ring-white/10",
+  contacted: "bg-brand-500/15 text-brand-100 ring-brand-400/30",
+  responded: "bg-emerald-500/15 text-emerald-100 ring-emerald-400/30",
+  no_response: "bg-amber-500/15 text-amber-100 ring-amber-400/30",
+  not_interested: "bg-red-500/15 text-red-100 ring-red-400/30",
+};
+
 export default function ClientsApp() {
   const [clients, setClients] = useState<Client[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -95,11 +103,10 @@ export default function ClientsApp() {
     is_primary: false,
     notes: "",
   });
-  const [activityForm, setActivityForm] = useState({
-    type: "call",
-    title: "",
-    body: "",
-    due_date: "",
+  const [trackingForm, setTrackingForm] = useState({
+    contact_status: "not_contacted",
+    contacted_at: "",
+    contact_response: "",
   });
   const [financialForm, setFinancialForm] = useState({
     kind: "income",
@@ -113,6 +120,7 @@ export default function ClientsApp() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [trackingSaving, setTrackingSaving] = useState(false);
 
   async function loadClients(search: string) {
     const data = await api<ClientsResponse>(
@@ -178,6 +186,16 @@ export default function ClientsApp() {
     });
   }, [selectedId]);
 
+  useEffect(() => {
+    if (!selected) return;
+
+    setTrackingForm({
+      contact_status: selected.contact_status || "not_contacted",
+      contacted_at: selected.contacted_at || "",
+      contact_response: selected.contact_response || "",
+    });
+  }, [selected]);
+
   const totals = useMemo(() => {
     const records = selected?.financialRecords || [];
     const paid = records
@@ -241,27 +259,30 @@ export default function ClientsApp() {
     }
   }
 
-  async function addActivity(event: React.FormEvent) {
+  async function updateContactTracking(event: React.FormEvent) {
     event.preventDefault();
 
     if (!selected) return;
 
+    setTrackingSaving(true);
+    setError("");
+
     try {
-      await api("/api/activities", {
-        method: "POST",
-        body: JSON.stringify({ ...activityForm, client_id: selected.id }),
+      const data = await api<{ ok: true; client: Client }>(`/api/clients/${selected.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(trackingForm),
       });
 
-      setActivityForm({
-        type: "call",
-        title: "",
-        body: "",
-        due_date: "",
-      });
-
-      await loadSelected(selected.id);
+      setSelected((current) => (current ? { ...current, ...data.client } : data.client));
+      setClients((currentClients) =>
+        currentClients.map((client) =>
+          client.id === selected.id ? { ...client, ...data.client } : client,
+        ),
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error añadiendo actividad");
+      setError(err instanceof Error ? err.message : "Error guardando seguimiento");
+    } finally {
+      setTrackingSaving(false);
     }
   }
 
@@ -427,7 +448,14 @@ export default function ClientsApp() {
                     : "border-slate-200 bg-white hover:bg-slate-50"
                   }`}
               >
-                <p className="font-black">{client.name}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-black">{client.name}</p>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase ring-1 ${contactStatusClasses[client.contact_status || "not_contacted"]}`}
+                  >
+                    {contactStatusLabels[client.contact_status || "not_contacted"]}
+                  </span>
+                </div>
                 <p
                   className={`mt-1 text-xs ${selectedId === client.id ? "text-slate-300" : "text-slate-500"
                     }`}
@@ -456,6 +484,11 @@ export default function ClientsApp() {
                     </h2>
                     <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-black uppercase text-brand-800">
                       {selected.status}
+                    </span>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-black uppercase ring-1 ${contactStatusClasses[selected.contact_status || "not_contacted"]}`}
+                    >
+                      {contactStatusLabels[selected.contact_status || "not_contacted"]}
                     </span>
                   </div>
                   <p className="mt-2 text-sm text-slate-500">
@@ -545,66 +578,95 @@ export default function ClientsApp() {
               </div>
 
               <div className="card p-5">
-                <h3 className="mb-4 text-lg font-black text-slate-950">Actividad</h3>
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-black text-slate-950">
+                      Contacto y respuesta
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Guarda si ya se ha contactado con el cliente y qué contestó.
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-3 py-1 text-[10px] font-black uppercase ring-1 ${contactStatusClasses[trackingForm.contact_status]}`}
+                  >
+                    {contactStatusLabels[trackingForm.contact_status]}
+                  </span>
+                </div>
 
-                <form onSubmit={addActivity} className="mb-4 grid gap-3">
+                <form onSubmit={updateContactTracking} className="grid gap-3">
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <select
-                      className="field-input"
-                      value={activityForm.type}
-                      onChange={(event) =>
-                        setActivityForm({ ...activityForm, type: event.target.value })
-                      }
-                    >
-                      <option value="call">Llamada</option>
-                      <option value="email">Email</option>
-                      <option value="meeting">Reunión</option>
-                      <option value="note">Nota</option>
-                    </select>
+                    <label className="space-y-1">
+                      <span className="field-label">Estado de contacto</span>
+                      <select
+                        className="field-input"
+                        value={trackingForm.contact_status}
+                        onChange={(event) =>
+                          setTrackingForm({
+                            ...trackingForm,
+                            contact_status: event.target.value,
+                          })
+                        }
+                      >
+                        <option value="not_contacted">No contactado</option>
+                        <option value="contacted">Contactado</option>
+                        <option value="responded">Respondió</option>
+                        <option value="no_response">Sin respuesta</option>
+                        <option value="not_interested">No interesado</option>
+                      </select>
+                    </label>
 
-                    <input
-                      className="field-input"
-                      type="date"
-                      value={activityForm.due_date}
-                      onChange={(event) =>
-                        setActivityForm({ ...activityForm, due_date: event.target.value })
-                      }
-                    />
+                    <label className="space-y-1">
+                      <span className="field-label">Fecha de contacto</span>
+                      <input
+                        className="field-input"
+                        type="date"
+                        value={trackingForm.contacted_at}
+                        onChange={(event) =>
+                          setTrackingForm({
+                            ...trackingForm,
+                            contacted_at: event.target.value,
+                          })
+                        }
+                      />
+                    </label>
                   </div>
 
-                  <input
-                    className="field-input"
-                    placeholder="Título"
-                    value={activityForm.title}
-                    onChange={(event) =>
-                      setActivityForm({ ...activityForm, title: event.target.value })
-                    }
-                    required
-                  />
+                  <label className="space-y-1">
+                    <span className="field-label">Respuesta del cliente</span>
+                    <textarea
+                      className="field-input min-h-28"
+                      placeholder="Ej: Le interesa recibir presupuesto la semana que viene."
+                      value={trackingForm.contact_response}
+                      onChange={(event) =>
+                        setTrackingForm({
+                          ...trackingForm,
+                          contact_response: event.target.value,
+                        })
+                      }
+                    />
+                  </label>
 
-                  <textarea
-                    className="field-input min-h-20"
-                    placeholder="Detalle"
-                    value={activityForm.body}
-                    onChange={(event) =>
-                      setActivityForm({ ...activityForm, body: event.target.value })
-                    }
-                  />
-
-                  <button className="btn-secondary">Añadir actividad</button>
+                  <button className="btn-secondary" disabled={trackingSaving}>
+                    {trackingSaving ? "Guardando..." : "Guardar seguimiento"}
+                  </button>
                 </form>
 
-                <div className="space-y-2">
-                  {(selected.activities || []).map((activity) => (
-                    <div key={activity.id} className="rounded-2xl border border-slate-200 p-4">
-                      <p className="font-bold text-slate-950">{activity.title}</p>
-                      <p className="text-xs text-slate-500">
-                        {activity.type} ·{" "}
-                        {new Date(activity.created_at).toLocaleDateString("es-ES")}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                {selected.contact_response ? (
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-black uppercase text-slate-500">
+                      Última respuesta guardada
+                    </p>
+                    <p className="mt-2 text-sm text-slate-700">
+                      {selected.contact_response}
+                    </p>
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      {selected.contacted_at
+                        ? new Date(selected.contacted_at).toLocaleDateString("es-ES")
+                        : "Sin fecha de contacto"}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </div>
 

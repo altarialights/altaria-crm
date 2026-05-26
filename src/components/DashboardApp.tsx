@@ -15,12 +15,18 @@ type DashboardData = {
     status: string;
     email: string | null;
   }>;
-  recentActivities: Array<{
+  contactSummary: Array<{
+    contact_status: string;
+    total: number;
+  }>;
+  contactFollowUps: Array<{
     id: string;
-    title: string;
-    type: string;
-    created_at: string;
-    client_name: string | null;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    contact_status: string | null;
+    contacted_at: string | null;
+    contact_response: string | null;
   }>;
 };
 
@@ -38,20 +44,20 @@ const statusClasses: Record<string, string> = {
   lost: "bg-red-50 text-red-700 ring-red-100",
 };
 
-const activityLabels: Record<string, string> = {
-  call: "Llamada",
-  email: "Email",
-  meeting: "Reunión",
-  note: "Nota",
-  task: "Tarea",
+const contactStatusLabels: Record<string, string> = {
+  not_contacted: "No contactado",
+  contacted: "Contactado",
+  responded: "Respondió",
+  no_response: "Sin respuesta",
+  not_interested: "No interesado",
 };
 
-const activityIcons: Record<string, string> = {
-  call: "☎️",
-  email: "✉️",
-  meeting: "🤝",
-  note: "📝",
-  task: "✅",
+const contactStatusClasses: Record<string, string> = {
+  not_contacted: "bg-white/5 text-white/70 ring-white/10",
+  contacted: "bg-brand-500/15 text-brand-100 ring-brand-400/30",
+  responded: "bg-emerald-500/15 text-emerald-100 ring-emerald-400/30",
+  no_response: "bg-amber-500/15 text-amber-100 ring-amber-400/30",
+  not_interested: "bg-red-500/15 text-red-100 ring-red-400/30",
 };
 
 export default function DashboardApp() {
@@ -137,7 +143,14 @@ export default function DashboardApp() {
 
   const cashBalance = data.stats.revenueCents - data.stats.pendingCents;
   const hasRecentClients = data.recentClients.length > 0;
-  const hasRecentActivities = data.recentActivities.length > 0;
+  const hasContactFollowUps = data.contactFollowUps.length > 0;
+  const contactTotals = data.contactSummary.reduce<Record<string, number>>(
+    (totals, item) => ({
+      ...totals,
+      [item.contact_status || "not_contacted"]: Number(item.total || 0),
+    }),
+    {},
+  );
 
   return (
     <div className="space-y-6">
@@ -315,9 +328,9 @@ export default function DashboardApp() {
       <section className="card overflow-hidden">
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 p-5">
           <div>
-            <h2 className="text-lg font-black text-slate-950">Actividad reciente</h2>
+            <h2 className="text-lg font-black text-slate-950">Seguimiento de contacto</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Últimos movimientos registrados en clientes.
+              Control rápido de a quién se ha contactado y qué respuesta ha dado.
             </p>
           </div>
 
@@ -330,37 +343,62 @@ export default function DashboardApp() {
         </div>
 
         <div className="p-5">
-          {!hasRecentActivities ? (
+          <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {Object.entries(contactStatusLabels).map(([status, label]) => (
+              <div
+                key={status}
+                className="rounded-2xl border border-white/10 bg-white/5 p-4"
+              >
+                <p className="text-xs font-black uppercase text-white/45">{label}</p>
+                <p className="mt-2 text-2xl font-black text-white">
+                  {contactTotals[status] || 0}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {!hasContactFollowUps ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
-              <p className="font-black text-slate-950">Sin actividad registrada</p>
+              <p className="font-black text-slate-950">Sin seguimiento todavía</p>
               <p className="mt-1 text-sm text-slate-500">
-                Las llamadas, notas, reuniones y emails aparecerán en esta zona.
+                Cuando guardes si un cliente fue contactado y su respuesta, aparecerá aquí.
               </p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {data.recentActivities.map((activity) => (
+              {data.contactFollowUps.map((client) => {
+                const status = client.contact_status || "not_contacted";
+
+                return (
                 <div
-                  key={activity.id}
+                  key={client.id}
                   className="flex items-start gap-4 py-4 first:pt-0 last:pb-0"
                 >
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-50 text-lg ring-1 ring-slate-100">
-                    {activityIcons[activity.type] || "📝"}
-                  </div>
-
                   <div className="min-w-0 flex-1">
-                    <p className="font-black text-slate-950">{activity.title}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-black text-slate-950">{client.name}</p>
+                      <span
+                        className={`rounded-full px-2 py-1 text-[10px] font-black uppercase ring-1 ${contactStatusClasses[status]}`}
+                      >
+                        {contactStatusLabels[status] || status}
+                      </span>
+                    </div>
                     <p className="mt-1 text-sm text-slate-500">
-                      {activityLabels[activity.type] || activity.type} ·{" "}
-                      {activity.client_name || "Sin cliente"}
+                      {client.contact_response || "Sin respuesta registrada"}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      {client.email || client.phone || "Sin datos de contacto"}
                     </p>
                   </div>
 
                   <p className="hidden shrink-0 text-xs font-bold text-slate-400 sm:block">
-                    {new Date(activity.created_at).toLocaleDateString("es-ES")}
+                    {client.contacted_at
+                      ? new Date(client.contacted_at).toLocaleDateString("es-ES")
+                      : "Sin fecha"}
                   </p>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
