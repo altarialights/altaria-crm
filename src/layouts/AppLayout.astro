@@ -18,25 +18,25 @@ const navItems = [
 ---
 
 <BaseLayout title={title}>
-  <div class="min-h-screen bg-[#050505] text-white lg:flex">
+  <div class="min-h-screen min-w-0 bg-[#050505] text-white lg:flex">
     <aside
-      class="border-b border-white/10 bg-[#050505] text-white lg:fixed lg:inset-y-0 lg:left-0 lg:w-72 lg:border-b-0 lg:border-r"
+      class="sticky top-0 z-30 border-b border-white/10 bg-[#050505]/95 text-white backdrop-blur lg:fixed lg:inset-y-0 lg:left-0 lg:w-72 lg:border-b-0 lg:border-r"
     >
-      <div class="flex items-center justify-between px-5 py-5 lg:block">
-        <a href="/" class="flex items-center gap-3">
+      <div class="flex items-center justify-between gap-3 px-4 py-4 sm:px-5 lg:block lg:py-5">
+        <a href="/" class="flex min-w-0 items-center gap-3">
           <img
             src="/logo-morado.png"
             alt="Altaria Lights"
-            class="h-11 w-11 rounded-full shadow-glow-purple"
+            class="h-10 w-10 shrink-0 rounded-full shadow-glow-purple sm:h-11 sm:w-11"
           />
-          <div>
-            <p class="text-base font-bold leading-none text-shadow-glow">
+          <div class="min-w-0">
+            <p class="truncate text-base font-bold leading-none text-shadow-glow">
               Altaria CRM
             </p>
-            <p class="mt-1 text-xs text-white/50">Gestión empresarial</p>
+            <p class="mt-1 truncate text-xs text-white/50">Gestión empresarial</p>
           </div>
         </a>
-        <form method="post" action="/api/auth/logout" class="lg:hidden">
+        <form method="post" action="/api/auth/logout" class="shrink-0 lg:hidden">
           <button
             class="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15"
             >Salir</button
@@ -45,14 +45,14 @@ const navItems = [
       </div>
 
       <nav
-        class="flex gap-2 overflow-x-auto px-4 pb-4 lg:block lg:space-y-1 lg:overflow-visible lg:pb-0"
+        class="flex gap-2 overflow-x-auto px-4 pb-3 sm:px-5 lg:block lg:space-y-1 lg:overflow-visible lg:px-4 lg:pb-0"
       >
         {
           navItems.map((item) => (
             <a
               href={item.href}
               class:list={[
-                "hover-underline-purple whitespace-nowrap rounded-xl px-4 py-3 text-sm font-semibold transition lg:flex lg:items-center lg:gap-3",
+                "hover-underline-purple shrink-0 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold transition lg:flex lg:items-center lg:gap-3 lg:py-3",
                 current === item.key
                   ? "bg-[rgba(82,51,255,0.2)] text-white ring-1 ring-brand-400/40 shadow-[0_0_22px_rgba(82,51,255,0.24)]"
                   : "text-white/60 hover:bg-white/10 hover:text-white",
@@ -82,16 +82,16 @@ const navItems = [
 
     <main class="min-w-0 flex-1 lg:pl-72">
       <header
-        class="sticky top-0 z-20 border-b border-white/10 bg-[rgba(13,19,24,0.76)] px-5 py-4 backdrop-blur"
+        class="relative z-20 border-b border-white/10 bg-[rgba(13,19,24,0.76)] px-4 py-3 backdrop-blur sm:px-5 lg:sticky lg:top-0 lg:py-4"
       >
         <div class="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <div>
+          <div class="min-w-0">
             <p
               class="text-xs font-semibold uppercase tracking-wide text-white/45"
             >
               CRM privado
             </p>
-            <h1 class="mt-1 text-2xl font-black tracking-tight text-white">
+            <h1 class="mt-1 truncate text-xl font-black tracking-tight text-white sm:text-2xl">
               {title}
             </h1>
           </div>
@@ -111,7 +111,7 @@ const navItems = [
         </div>
       </header>
 
-      <section class="mx-auto max-w-7xl px-5 py-6">
+      <section class="mx-auto max-w-7xl px-4 py-4 sm:px-5 sm:py-6">
         <slot />
       </section>
     </main>

@@ -123,14 +123,14 @@ export default function DashboardApp() {
   if (!data) {
     return (
       <div className="grid gap-6">
-        <div className="card animate-pulse p-6">
-          <div className="h-8 w-64 rounded-xl bg-slate-100" />
+        <div className="card animate-pulse p-5 sm:p-6">
+          <div className="h-8 w-48 max-w-full rounded-xl bg-slate-100 sm:w-64" />
           <div className="mt-3 h-4 w-96 max-w-full rounded-xl bg-slate-100" />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[1, 2, 3, 4].map((item) => (
-            <div key={item} className="card animate-pulse p-5">
+            <div key={item} className="card animate-pulse p-4 sm:p-5">
               <div className="h-5 w-24 rounded-xl bg-slate-100" />
               <div className="mt-4 h-8 w-32 rounded-xl bg-slate-100" />
               <div className="mt-3 h-4 w-36 rounded-xl bg-slate-100" />
@@ -154,7 +154,7 @@ export default function DashboardApp() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[1.25rem] border border-white/10 bg-[linear-gradient(135deg,rgba(82,51,255,.34),rgba(17,17,17,.96)_42%,rgba(6,203,173,.16))] p-6 text-white shadow-[0_0_44px_rgba(82,51,255,0.18)] md:p-8">
+      <section className="relative overflow-hidden rounded-[1.25rem] border border-white/10 bg-[linear-gradient(135deg,rgba(82,51,255,.34),rgba(17,17,17,.96)_42%,rgba(6,203,173,.16))] p-5 text-white shadow-[0_0_44px_rgba(82,51,255,0.18)] sm:p-6 md:p-8">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#866afa] to-transparent" />
         <div className="absolute inset-x-6 bottom-0 h-px bg-gradient-to-r from-transparent via-[#06cbad] to-transparent" />
 
@@ -163,7 +163,7 @@ export default function DashboardApp() {
             <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-wide text-white/80 ring-1 ring-white/15">
               Panel de control
             </p>
-            <h1 className="mt-4 text-3xl font-black tracking-tight md:text-4xl">
+            <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl md:text-4xl">
               Resumen general del CRM
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
@@ -172,16 +172,16 @@ export default function DashboardApp() {
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-auto">
             <a
               href="/clientes"
-              className="rounded-2xl bg-gradient-to-r from-[#06cbad] to-[#866afa] px-4 py-3 text-sm font-black text-white shadow-[0_0_24px_rgba(6,203,173,0.22)] transition hover:-translate-y-0.5"
+              className="rounded-2xl bg-gradient-to-r from-[#06cbad] to-[#866afa] px-4 py-3 text-center text-sm font-black text-white shadow-[0_0_24px_rgba(6,203,173,0.22)] transition hover:-translate-y-0.5"
             >
               + Nuevo cliente
             </a>
             <a
               href="/tareas"
-              className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white ring-1 ring-white/15 transition hover:-translate-y-0.5 hover:bg-white/15"
+              className="rounded-2xl bg-white/10 px-4 py-3 text-center text-sm font-black text-white ring-1 ring-white/15 transition hover:-translate-y-0.5 hover:bg-white/15"
             >
               Ver tareas
             </a>
@@ -197,9 +197,9 @@ export default function DashboardApp() {
             className="card group overflow-hidden p-0 transition hover:-translate-y-1 hover:shadow-lg"
           >
             <div className={`h-1.5 bg-gradient-to-r ${card.accent}`} />
-            <div className="p-5">
+            <div className="p-4 sm:p-5">
               <div className="flex items-start justify-between gap-4">
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-500">{card.label}</p>
                   <p className="mt-2 text-2xl font-black text-slate-950">
                     {card.value}
@@ -220,7 +220,7 @@ export default function DashboardApp() {
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="card overflow-hidden">
-          <div className="flex items-center justify-between gap-4 border-b border-slate-100 p-5">
+          <div className="flex flex-col items-start justify-between gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:p-5">
             <div>
               <h2 className="text-lg font-black text-slate-950">Últimos clientes</h2>
               <p className="mt-1 text-sm text-slate-500">
@@ -236,7 +236,7 @@ export default function DashboardApp() {
             </a>
           </div>
 
-          <div className="p-5">
+          <div className="p-4 sm:p-5">
             {!hasRecentClients ? (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
                 <p className="font-black text-slate-950">Todavía no hay clientes</p>
@@ -256,7 +256,7 @@ export default function DashboardApp() {
                   <a
                     key={client.id}
                     href="/clientes"
-                    className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm"
+                    className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -284,14 +284,14 @@ export default function DashboardApp() {
         </div>
 
         <div className="card overflow-hidden">
-          <div className="border-b border-slate-100 p-5">
+          <div className="border-b border-slate-100 p-4 sm:p-5">
             <h2 className="text-lg font-black text-slate-950">Estado económico</h2>
             <p className="mt-1 text-sm text-slate-500">
               Lectura rápida de cobrado frente a pendiente.
             </p>
           </div>
 
-          <div className="space-y-4 p-5">
+          <div className="space-y-4 p-4 sm:p-5">
             <div className="rounded-3xl bg-emerald-50 p-5 ring-1 ring-emerald-100">
               <p className="text-xs font-black uppercase text-emerald-700">
                 Cobrado
@@ -326,7 +326,7 @@ export default function DashboardApp() {
       </section>
 
       <section className="card overflow-hidden">
-        <div className="flex items-center justify-between gap-4 border-b border-slate-100 p-5">
+        <div className="flex flex-col items-start justify-between gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:p-5">
           <div>
             <h2 className="text-lg font-black text-slate-950">Seguimiento de contacto</h2>
             <p className="mt-1 text-sm text-slate-500">
@@ -342,8 +342,8 @@ export default function DashboardApp() {
           </a>
         </div>
 
-        <div className="p-5">
-          <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="p-4 sm:p-5">
+          <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {Object.entries(contactStatusLabels).map(([status, label]) => (
               <div
                 key={status}
@@ -372,7 +372,7 @@ export default function DashboardApp() {
                 return (
                 <div
                   key={client.id}
-                  className="flex items-start gap-4 py-4 first:pt-0 last:pb-0"
+                  className="flex flex-col gap-2 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-start sm:gap-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -391,7 +391,7 @@ export default function DashboardApp() {
                     </p>
                   </div>
 
-                  <p className="hidden shrink-0 text-xs font-bold text-slate-400 sm:block">
+                  <p className="shrink-0 text-xs font-bold text-slate-400 sm:text-right">
                     {client.contacted_at
                       ? new Date(client.contacted_at).toLocaleDateString("es-ES")
                       : "Sin fecha"}

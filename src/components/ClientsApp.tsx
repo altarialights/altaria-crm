@@ -313,9 +313,9 @@ export default function ClientsApp() {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
-      <section className="space-y-4">
-        <div className="card p-5">
+    <div className="grid min-w-0 gap-6 2xl:grid-cols-[420px_minmax(0,1fr)]">
+      <section className="min-w-0 space-y-4">
+        <div className="card p-4 sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-lg font-black text-slate-950">Nuevo cliente</h2>
           </div>
@@ -423,7 +423,7 @@ export default function ClientsApp() {
           </form>
         </div>
 
-        <div className="card p-5">
+        <div className="card p-4 sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-lg font-black text-slate-950">Clientes</h2>
             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
@@ -438,18 +438,18 @@ export default function ClientsApp() {
             onChange={(event) => setQuery(event.target.value)}
           />
 
-          <div className="max-h-[560px] space-y-2 overflow-auto pr-1">
+          <div className="max-h-[46vh] space-y-2 overflow-auto pr-1 2xl:max-h-[560px]">
             {clients.map((client) => (
               <button
                 key={client.id}
                 onClick={() => setSelectedId(client.id)}
-                className={`w-full rounded-2xl border p-4 text-left transition ${selectedId === client.id
+                className={`w-full rounded-2xl border p-3 text-left transition sm:p-4 ${selectedId === client.id
                     ? "border-slate-950 bg-slate-950 text-white"
                     : "border-slate-200 bg-white hover:bg-slate-50"
                   }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <p className="font-black">{client.name}</p>
+                  <p className="min-w-0 truncate font-black">{client.name}</p>
                   <span
                     className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase ring-1 ${contactStatusClasses[client.contact_status || "not_contacted"]}`}
                   >
@@ -468,18 +468,18 @@ export default function ClientsApp() {
         </div>
       </section>
 
-      <section className="space-y-6">
+      <section className="min-w-0 space-y-6">
         {!selected ? (
           <div className="card p-8 text-center text-slate-500">
             Selecciona o crea un cliente.
           </div>
         ) : (
           <>
-            <div className="card p-6">
+            <div className="card p-4 sm:p-6">
               <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
-                <div>
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-2xl font-black text-slate-950">
+                    <h2 className="min-w-0 break-words text-xl font-black text-slate-950 sm:text-2xl">
                       {selected.name}
                     </h2>
                     <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-black uppercase text-brand-800">
@@ -499,7 +499,7 @@ export default function ClientsApp() {
                   </p>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid w-full gap-3 sm:grid-cols-2 md:w-auto">
                   <div className="rounded-2xl bg-emerald-50 p-4">
                     <p className="text-xs font-bold uppercase text-emerald-700">
                       Cobrado
@@ -528,7 +528,7 @@ export default function ClientsApp() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
-              <div className="card p-5">
+              <div className="card p-4 sm:p-5">
                 <h3 className="mb-4 text-lg font-black text-slate-950">Contactos</h3>
 
                 <form onSubmit={addContact} className="mb-4 grid gap-3">
@@ -577,9 +577,9 @@ export default function ClientsApp() {
                 </div>
               </div>
 
-              <div className="card p-5">
-                <div className="mb-4 flex items-start justify-between gap-3">
-                  <div>
+              <div className="card p-4 sm:p-5">
+                <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row">
+                  <div className="min-w-0">
                     <h3 className="text-lg font-black text-slate-950">
                       Contacto y respuesta
                     </h3>
@@ -670,14 +670,14 @@ export default function ClientsApp() {
               </div>
             </div>
 
-            <div className="card p-5">
+            <div className="card p-4 sm:p-5">
               <h3 className="mb-4 text-lg font-black text-slate-950">
                 Datos económicos
               </h3>
 
               <form
                 onSubmit={addFinancial}
-                className="mb-4 grid gap-3 lg:grid-cols-[1fr_130px_150px_150px_auto]"
+                className="mb-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_130px_150px_150px_auto]"
               >
                 <input
                   className="field-input"
@@ -728,8 +728,8 @@ export default function ClientsApp() {
                 <button className="btn-secondary">Añadir</button>
               </form>
 
-              <div className="overflow-hidden rounded-2xl border border-slate-200">
-                <table className="w-full text-left text-sm">
+              <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                <table className="min-w-[640px] text-left text-sm">
                   <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
                       <th className="p-3">Concepto</th>

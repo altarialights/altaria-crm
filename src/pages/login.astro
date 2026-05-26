@@ -4,14 +4,14 @@ import LoginForm from "../components/LoginForm";
 ---
 
 <BaseLayout title="Login · Altaria CRM">
-  <main class="grid min-h-screen bg-[#050505] text-white lg:grid-cols-[1.1fr_0.9fr]">
+  <main class="grid min-h-screen bg-[#050505] text-white lg:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)]">
     <section class="relative hidden overflow-hidden lg:block">
       <div
         class="absolute inset-0 bg-[linear-gradient(135deg,rgba(82,51,255,.38),transparent_36%),linear-gradient(225deg,rgba(6,203,173,.22),transparent_40%),linear-gradient(180deg,#050505,#111)]"
       >
       </div>
       <div
-        class="relative flex h-full flex-col justify-between p-12 text-white"
+        class="relative flex h-full flex-col justify-between p-8 text-white xl:p-12"
       >
         <a href="/" class="flex items-center gap-3">
           <img
@@ -29,7 +29,7 @@ import LoginForm from "../components/LoginForm";
           </div>
         </a>
         <div class="max-w-xl">
-          <h1 class="text-5xl font-black tracking-tight text-white">
+          <h1 class="text-4xl font-black tracking-tight text-white xl:text-5xl">
             Clientes, tareas, y economía en un solo sitio.
           </h1>
           <p class="mt-5 max-w-lg text-base leading-7 text-white/70">
@@ -43,9 +43,9 @@ import LoginForm from "../components/LoginForm";
       </div>
     </section>
 
-    <section class="flex items-center justify-center px-5 py-12">
+    <section class="flex items-center justify-center px-4 py-8 sm:px-5 sm:py-12">
       <div
-        class="w-full max-w-md rounded-3xl border border-white/10 bg-[#111] p-8 shadow-[0_0_42px_rgba(82,51,255,0.2)] backdrop-blur"
+        class="w-full max-w-md rounded-2xl border border-white/10 bg-[#111] p-5 shadow-[0_0_42px_rgba(82,51,255,0.2)] backdrop-blur sm:p-8"
       >
         <div class="mb-8 text-center">
           <img

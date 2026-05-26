@@ -225,7 +225,7 @@ export default function TasksBoardApp() {
 
   return (
     <div className="space-y-6">
-      <section className="card p-5">
+      <section className="card p-4 sm:p-5">
         <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <div>
             <h2 className="text-lg font-black text-slate-950">Nueva tarea</h2>
@@ -249,7 +249,7 @@ export default function TasksBoardApp() {
 
         <form
           onSubmit={createTask}
-          className="grid gap-3 xl:grid-cols-[1fr_1fr_160px_160px_160px_auto]"
+          className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_160px_160px_160px_auto]"
         >
           <input
             className="field-input"
@@ -307,15 +307,15 @@ export default function TasksBoardApp() {
             <option value="urgent">Urgente</option>
           </select>
 
-          <button className="btn-primary">Crear</button>
+          <button className="btn-primary lg:col-span-2 2xl:col-span-1">Crear</button>
         </form>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-4">
+      <section className="grid auto-cols-[minmax(280px,85vw)] grid-flow-col gap-4 overflow-x-auto pb-2 xl:auto-cols-auto xl:grid-flow-row xl:grid-cols-4 xl:overflow-visible xl:pb-0">
         {columns.map((column) => (
           <div
             key={column.id}
-            className={`card min-h-[620px] bg-slate-100/60 p-4 transition ${dragTaskId ? "ring-2 ring-slate-200" : ""
+            className={`card min-h-[420px] bg-slate-100/60 p-4 transition sm:min-h-[500px] xl:min-h-[620px] ${dragTaskId ? "ring-2 ring-slate-200" : ""
               }`}
             onDragOver={(event) => {
               event.preventDefault();
@@ -330,7 +330,7 @@ export default function TasksBoardApp() {
             }}
           >
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h3 className="font-black text-slate-950">{column.title}</h3>
+              <h3 className="min-w-0 truncate font-black text-slate-950">{column.title}</h3>
               <span className="rounded-full bg-white px-2 py-1 text-xs font-bold text-slate-500 ring-1 ring-slate-200">
                 {column.tasks.length}
               </span>
@@ -349,14 +349,14 @@ export default function TasksBoardApp() {
                       setDragTaskId(task.id);
                     }}
                     onDragEnd={() => setDragTaskId(null)}
-                    className={`cursor-grab rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition active:cursor-grabbing ${isMoving ? "opacity-70" : "opacity-100"
+                    className={`cursor-grab rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition active:cursor-grabbing sm:p-4 ${isMoving ? "opacity-70" : "opacity-100"
                       }`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <p className="font-black text-slate-950">{task.title}</p>
+                      <p className="min-w-0 break-words font-black text-slate-950">{task.title}</p>
 
                       <span
-                        className={`rounded-full px-2 py-1 text-[10px] font-black uppercase ${task.priority === "urgent" || task.priority === "high"
+                        className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-black uppercase ${task.priority === "urgent" || task.priority === "high"
                             ? "bg-red-50 text-red-700"
                             : "bg-slate-100 text-slate-500"
                           }`}
@@ -366,7 +366,7 @@ export default function TasksBoardApp() {
                     </div>
 
                     {task.description ? (
-                      <p className="mt-2 text-sm text-slate-600">
+                      <p className="mt-2 break-words text-sm text-slate-600">
                         {task.description}
                       </p>
                     ) : null}

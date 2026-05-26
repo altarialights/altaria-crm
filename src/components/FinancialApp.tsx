@@ -125,29 +125,29 @@ export default function FinancialApp() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-4">
-        <div className="card p-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="card p-4 sm:p-5">
           <p className="text-sm font-bold text-slate-500">Ingresos</p>
           <p className="mt-2 text-2xl font-black">
             {formatMoney(totals.income_cents)}
           </p>
         </div>
 
-        <div className="card p-5">
+        <div className="card p-4 sm:p-5">
           <p className="text-sm font-bold text-slate-500">Gastos</p>
           <p className="mt-2 text-2xl font-black">
             {formatMoney(totals.expense_cents)}
           </p>
         </div>
 
-        <div className="card p-5">
+        <div className="card p-4 sm:p-5">
           <p className="text-sm font-bold text-slate-500">Pagado</p>
           <p className="mt-2 text-2xl font-black">
             {formatMoney(totals.paid_cents)}
           </p>
         </div>
 
-        <div className="card p-5">
+        <div className="card p-4 sm:p-5">
           <p className="text-sm font-bold text-slate-500">Pendiente</p>
           <p className="mt-2 text-2xl font-black">
             {formatMoney(totals.pending_cents)}
@@ -155,7 +155,7 @@ export default function FinancialApp() {
         </div>
       </div>
 
-      <section className="card p-5">
+      <section className="card p-4 sm:p-5">
         <h2 className="mb-4 text-lg font-black text-slate-950">
           Nuevo registro económico
         </h2>
@@ -168,7 +168,7 @@ export default function FinancialApp() {
 
         <form
           onSubmit={createRecord}
-          className="grid gap-3 xl:grid-cols-[1fr_1fr_130px_140px_140px_140px_auto]"
+          className="grid gap-3 xl:grid-cols-2 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_130px_140px_140px_140px_auto]"
         >
           <select
             className="field-input"
@@ -232,17 +232,17 @@ export default function FinancialApp() {
             }
           />
 
-          <button className="btn-primary">Añadir</button>
+          <button className="btn-primary xl:col-span-2 2xl:col-span-1">Añadir</button>
         </form>
       </section>
 
       <section className="card overflow-hidden">
-        <div className="border-b border-slate-100 p-5">
+        <div className="border-b border-slate-100 p-4 sm:p-5">
           <h2 className="text-lg font-black text-slate-950">Registros</h2>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="min-w-[760px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
                 <th className="p-4">Cliente</th>
