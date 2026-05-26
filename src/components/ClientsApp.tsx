@@ -73,6 +73,26 @@ const emptyClient = {
   notes: "",
 };
 
+function clientToForm(client: Client) {
+  return {
+    name: client.name || "",
+    type: client.type || "company",
+    tax_id: client.tax_id || "",
+    email: client.email || "",
+    phone: client.phone || "",
+    website: client.website || "",
+    address: client.address || "",
+    city: client.city || "",
+    province: client.province || "",
+    postal_code: client.postal_code || "",
+    country: client.country || "España",
+    status: client.status || "lead",
+    source: client.source || "",
+    owner_user_id: client.owner_user_id || "",
+    notes: client.notes || "",
+  };
+}
+
 const contactStatusLabels: Record<string, string> = {
   not_contacted: "No contactado",
   contacted: "Contactado",
@@ -95,6 +115,7 @@ export default function ClientsApp() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [selected, setSelected] = useState<Client | null>(null);
   const [form, setForm] = useState(emptyClient);
+  const [editForm, setEditForm] = useState(emptyClient);
   const [contactForm, setContactForm] = useState({
     full_name: "",
     position: "",
@@ -120,6 +141,8 @@ export default function ClientsApp() {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [trackingSaving, setTrackingSaving] = useState(false);
 
   async function loadClients(search: string) {
@@ -189,6 +212,7 @@ export default function ClientsApp() {
   useEffect(() => {
     if (!selected) return;
 
+    setEditForm(clientToForm(selected));
     setTrackingForm({
       contact_status: selected.contact_status || "not_contacted",
       contacted_at: selected.contacted_at || "",
@@ -283,6 +307,61 @@ export default function ClientsApp() {
       setError(err instanceof Error ? err.message : "Error guardando seguimiento");
     } finally {
       setTrackingSaving(false);
+    }
+  }
+
+  async function updateClient(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (!selected) return;
+
+    setEditSaving(true);
+    setError("");
+
+    try {
+      const data = await api<{ ok: true; client: Client }>(`/api/clients/${selected.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(editForm),
+      });
+
+      setSelected((current) => (current ? { ...current, ...data.client } : data.client));
+      setClients((currentClients) =>
+        currentClients.map((client) =>
+          client.id === selected.id ? { ...client, ...data.client } : client,
+        ),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error actualizando cliente");
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  async function deleteClient() {
+    if (!selected) return;
+
+    const confirmed = window.confirm(
+      `¿Seguro que quieres eliminar "${selected.name}"? Esta acción no se puede deshacer.`,
+    );
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setError("");
+
+    try {
+      await api(`/api/clients/${selected.id}`, {
+        method: "DELETE",
+      });
+
+      const nextClients = clients.filter((client) => client.id !== selected.id);
+      setClients(nextClients);
+      setSelectedId(nextClients[0]?.id || "");
+      setSelected(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error eliminando cliente");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -525,6 +604,190 @@ export default function ClientsApp() {
                   {selected.notes}
                 </p>
               ) : null}
+            </div>
+
+            <div className="card p-4 sm:p-5">
+              <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                <h3 className="text-lg font-black text-slate-950">Editar cliente</h3>
+                <button
+                  type="button"
+                  onClick={deleteClient}
+                  className="inline-flex items-center justify-center rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm font-black text-red-100 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={deleting}
+                >
+                  {deleting ? "Eliminando..." : "Eliminar cliente"}
+                </button>
+              </div>
+
+              <form onSubmit={updateClient} className="grid gap-3">
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_160px_160px]">
+                  <label className="space-y-1">
+                    <span className="field-label">Nombre *</span>
+                    <input
+                      className="field-input"
+                      value={editForm.name}
+                      onChange={(event) =>
+                        setEditForm({ ...editForm, name: event.target.value })
+                      }
+                      required
+                    />
+                  </label>
+
+                  <label className="space-y-1">
+                    <span className="field-label">Tipo</span>
+                    <select
+                      className="field-input"
+                      value={editForm.type}
+                      onChange={(event) =>
+                        setEditForm({ ...editForm, type: event.target.value })
+                      }
+                    >
+                      <option value="company">Empresa</option>
+                      <option value="person">Persona</option>
+                    </select>
+                  </label>
+
+                  <label className="space-y-1">
+                    <span className="field-label">Estado</span>
+                    <select
+                      className="field-input"
+                      value={editForm.status}
+                      onChange={(event) =>
+                        setEditForm({ ...editForm, status: event.target.value })
+                      }
+                    >
+                      <option value="lead">Lead</option>
+                      <option value="active">Activo</option>
+                      <option value="inactive">Inactivo</option>
+                      <option value="lost">Perdido</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <input
+                    className="field-input"
+                    placeholder="CIF/NIF"
+                    value={editForm.tax_id}
+                    onChange={(event) =>
+                      setEditForm({ ...editForm, tax_id: event.target.value })
+                    }
+                  />
+
+                  <select
+                    className="field-input"
+                    value={editForm.owner_user_id}
+                    onChange={(event) =>
+                      setEditForm({ ...editForm, owner_user_id: event.target.value })
+                    }
+                  >
+                    <option value="">Sin responsable</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    className="field-input"
+                    placeholder="Email"
+                    value={editForm.email}
+                    onChange={(event) =>
+                      setEditForm({ ...editForm, email: event.target.value })
+                    }
+                  />
+
+                  <input
+                    className="field-input"
+                    placeholder="Teléfono"
+                    value={editForm.phone}
+                    onChange={(event) =>
+                      setEditForm({ ...editForm, phone: event.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <input
+                    className="field-input"
+                    placeholder="Web"
+                    value={editForm.website}
+                    onChange={(event) =>
+                      setEditForm({ ...editForm, website: event.target.value })
+                    }
+                  />
+
+                  <input
+                    className="field-input"
+                    placeholder="Origen"
+                    value={editForm.source}
+                    onChange={(event) =>
+                      setEditForm({ ...editForm, source: event.target.value })
+                    }
+                  />
+
+                  <input
+                    className="field-input"
+                    placeholder="País"
+                    value={editForm.country}
+                    onChange={(event) =>
+                      setEditForm({ ...editForm, country: event.target.value })
+                    }
+                  />
+
+                  <input
+                    className="field-input"
+                    placeholder="Código postal"
+                    value={editForm.postal_code}
+                    onChange={(event) =>
+                      setEditForm({ ...editForm, postal_code: event.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <input
+                    className="field-input"
+                    placeholder="Dirección"
+                    value={editForm.address}
+                    onChange={(event) =>
+                      setEditForm({ ...editForm, address: event.target.value })
+                    }
+                  />
+
+                  <input
+                    className="field-input"
+                    placeholder="Ciudad"
+                    value={editForm.city}
+                    onChange={(event) =>
+                      setEditForm({ ...editForm, city: event.target.value })
+                    }
+                  />
+
+                  <input
+                    className="field-input"
+                    placeholder="Provincia"
+                    value={editForm.province}
+                    onChange={(event) =>
+                      setEditForm({ ...editForm, province: event.target.value })
+                    }
+                  />
+                </div>
+
+                <textarea
+                  className="field-input min-h-24"
+                  placeholder="Notas"
+                  value={editForm.notes}
+                  onChange={(event) =>
+                    setEditForm({ ...editForm, notes: event.target.value })
+                  }
+                />
+
+                <button className="btn-primary" disabled={editSaving}>
+                  {editSaving ? "Guardando..." : "Guardar cambios"}
+                </button>
+              </form>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
