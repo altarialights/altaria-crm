@@ -1,0 +1,275 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #f4f1ff;
+  --color-brand-100: #ebe6ff;
+  --color-brand-200: #d9ceff;
+  --color-brand-300: #bba7ff;
+  --color-brand-400: #9a7cff;
+  --color-brand-500: #866afa;
+  --color-brand-600: #5233ff;
+  --color-brand-700: #4027d3;
+  --color-brand-800: #2c1b91;
+  --color-brand-900: #1a1159;
+  --color-altaria-purple: #5233ff;
+  --color-altaria-cyan: #06cbad;
+}
+
+:root {
+  --altaria-black: #050505;
+  --altaria-panel: #111111;
+  --altaria-panel-soft: #18171f;
+  --altaria-panel-muted: #222222;
+  --altaria-border: rgba(134, 106, 250, 0.24);
+  --altaria-border-strong: rgba(134, 106, 250, 0.42);
+  --altaria-purple: #5233ff;
+  --altaria-purple-soft: #866afa;
+  --altaria-cyan: #06cbad;
+  --altaria-text: #ffffff;
+  --altaria-muted: rgba(255, 255, 255, 0.72);
+  --altaria-faint: rgba(255, 255, 255, 0.48);
+  --altaria-glow: 0 0 30px rgba(82, 51, 255, 0.34);
+}
+
+html {
+  color-scheme: dark;
+  background: var(--altaria-black);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(82, 51, 255, 0.22), transparent 28%),
+    linear-gradient(225deg, rgba(6, 203, 173, 0.14), transparent 32%),
+    linear-gradient(180deg, #050505 0%, #0a0a0a 48%, #050505 100%);
+  color: var(--altaria-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(6, 203, 173, 0.35);
+  color: #ffffff;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(134, 106, 250, 0.5);
+  border: 2px solid #0a0a0a;
+  border-radius: 999px;
+}
+
+.field-label {
+  @apply text-xs font-semibold uppercase tracking-wide;
+  color: var(--altaria-faint);
+}
+
+.field-input {
+  @apply w-full rounded-xl border px-3 py-2 text-sm outline-none transition;
+  background: rgba(34, 34, 34, 0.9);
+  border-color: var(--altaria-border);
+  color: var(--altaria-text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.field-input::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.field-input:focus {
+  border-color: var(--altaria-purple-soft);
+  box-shadow: 0 0 0 4px rgba(82, 51, 255, 0.18), 0 0 24px rgba(82, 51, 255, 0.14);
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50;
+  background: linear-gradient(90deg, var(--altaria-cyan), var(--altaria-purple-soft));
+  box-shadow: 0 0 20px rgba(6, 203, 173, 0.24), 0 0 34px rgba(134, 106, 250, 0.16);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px rgba(6, 203, 173, 0.34), 0 0 42px rgba(134, 106, 250, 0.24);
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded-xl border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  background: rgba(13, 19, 24, 0.62);
+  border-color: var(--altaria-border);
+  color: var(--altaria-text);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.btn-secondary:hover {
+  background: rgba(82, 51, 255, 0.18);
+  border-color: var(--altaria-border-strong);
+}
+
+.card {
+  @apply rounded-2xl border;
+  background: rgba(17, 17, 17, 0.92);
+  border-color: var(--altaria-border);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(14px);
+}
+
+.card:hover {
+  border-color: var(--altaria-border-strong);
+}
+
+table {
+  color: var(--altaria-text);
+}
+
+thead {
+  background: rgba(34, 34, 34, 0.92);
+}
+
+tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+tbody tr:hover {
+  background: rgba(82, 51, 255, 0.08);
+}
+
+.tracking-tight,
+.tracking-wide,
+.tracking-wider {
+  letter-spacing: 0 !important;
+}
+
+.text-shadow-glow {
+  text-shadow: 0 0 30px var(--altaria-purple);
+}
+
+.shadow-glow-purple {
+  box-shadow: 0 0 20px 2px var(--altaria-purple);
+}
+
+.hover-underline-purple {
+  position: relative;
+}
+
+.hover-underline-purple::after {
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  content: "";
+  background: var(--altaria-purple);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.25s ease;
+}
+
+.hover-underline-purple:hover::after {
+  transform: scaleX(1);
+}
+
+.bg-white {
+  background-color: rgba(17, 17, 17, 0.94) !important;
+}
+
+.bg-white\/85 {
+  background-color: rgba(13, 19, 24, 0.78) !important;
+}
+
+.bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.bg-slate-50,
+.bg-slate-100 {
+  background-color: rgba(34, 34, 34, 0.78) !important;
+}
+
+.bg-slate-950 {
+  background-color: #050505 !important;
+}
+
+.bg-slate-800 {
+  background-color: #18171f !important;
+}
+
+.border-slate-100,
+.border-slate-200,
+.border-slate-300,
+.border-slate-800 {
+  border-color: var(--altaria-border) !important;
+}
+
+.divide-slate-100 > :not(:last-child) {
+  border-color: rgba(134, 106, 250, 0.18) !important;
+}
+
+.ring-slate-100,
+.ring-slate-200 {
+  --tw-ring-color: rgba(134, 106, 250, 0.24) !important;
+}
+
+.text-slate-950,
+.text-slate-900 {
+  color: #ffffff !important;
+}
+
+.text-slate-800,
+.text-slate-700,
+.text-slate-600 {
+  color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.text-slate-500,
+.text-slate-400,
+.text-slate-300 {
+  color: rgba(255, 255, 255, 0.58) !important;
+}
+
+.shadow-sm,
+.shadow-lg,
+.shadow-2xl {
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.24) !important;
+}
+
+.hover\:bg-slate-50:hover,
+.hover\:bg-slate-100:hover,
+.hover\:bg-slate-200:hover,
+.hover\:bg-slate-800:hover {
+  background-color: rgba(82, 51, 255, 0.18) !important;
+}
+
+.hover\:border-slate-300:hover {
+  border-color: var(--altaria-border-strong) !important;
+}
+
+.hover\:text-white:hover {
+  color: #ffffff !important;
+}

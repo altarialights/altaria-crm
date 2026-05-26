@@ -1,0 +1,7 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+import TasksBoardApp from "../components/TasksBoardApp";
+---
+<AppLayout title="Tareas" current="tasks">
+  <TasksBoardApp client:load />
+</AppLayout>

@@ -1,0 +1,20 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Altaria CRM" } = Astro.props;
+---
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="/logo-morado.png" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

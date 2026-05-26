@@ -1,0 +1,125 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  title?: string;
+  current?: string;
+}
+
+const { title = "Altaria CRM", current = "dashboard" } = Astro.props;
+const user = Astro.locals.user;
+
+const navItems = [
+  { key: "dashboard", label: "Dashboard", href: "/" },
+  { key: "clients", label: "Clientes", href: "/clientes" },
+  { key: "tasks", label: "Tareas", href: "/tareas" },
+  { key: "financial", label: "Economía", href: "/economia" },
+  { key: "users", label: "Usuarios", href: "/usuarios" },
+];
+---
+
+<BaseLayout title={title}>
+  <div class="min-h-screen bg-[#050505] text-white lg:flex">
+    <aside
+      class="border-b border-white/10 bg-[#050505] text-white lg:fixed lg:inset-y-0 lg:left-0 lg:w-72 lg:border-b-0 lg:border-r"
+    >
+      <div class="flex items-center justify-between px-5 py-5 lg:block">
+        <a href="/" class="flex items-center gap-3">
+          <img
+            src="/logo-morado.png"
+            alt="Altaria Lights"
+            class="h-11 w-11 rounded-full shadow-glow-purple"
+          />
+          <div>
+            <p class="text-base font-bold leading-none text-shadow-glow">
+              Altaria CRM
+            </p>
+            <p class="mt-1 text-xs text-white/50">Gestión empresarial</p>
+          </div>
+        </a>
+        <form method="post" action="/api/auth/logout" class="lg:hidden">
+          <button
+            class="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/15"
+            >Salir</button
+          >
+        </form>
+      </div>
+
+      <nav
+        class="flex gap-2 overflow-x-auto px-4 pb-4 lg:block lg:space-y-1 lg:overflow-visible lg:pb-0"
+      >
+        {
+          navItems.map((item) => (
+            <a
+              href={item.href}
+              class:list={[
+                "hover-underline-purple whitespace-nowrap rounded-xl px-4 py-3 text-sm font-semibold transition lg:flex lg:items-center lg:gap-3",
+                current === item.key
+                  ? "bg-[rgba(82,51,255,0.2)] text-white ring-1 ring-brand-400/40 shadow-[0_0_22px_rgba(82,51,255,0.24)]"
+                  : "text-white/60 hover:bg-white/10 hover:text-white",
+              ]}
+            >
+              {item.label}
+            </a>
+          ))
+        }
+      </nav>
+
+      <div
+        class="hidden px-5 lg:absolute lg:bottom-5 lg:left-0 lg:right-0 lg:block"
+      >
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-[0_0_28px_rgba(82,51,255,0.16)] backdrop-blur">
+          <p class="text-sm font-semibold">{user?.name}</p>
+          <p class="mt-1 truncate text-xs text-white/50">{user?.email}</p>
+          <p
+            class="mt-2 inline-flex rounded-full bg-brand-500/15 px-2 py-1 text-[11px] font-semibold text-brand-100 ring-1 ring-brand-400/30"
+          >
+            {user?.role}
+          </p>
+          <form method="post" action="/api/auth/logout" class="mt-4">
+            <button
+              class="w-full rounded-xl bg-gradient-to-r from-[var(--altaria-cyan)] to-brand-500 px-3 py-2 text-sm font-bold text-white shadow-[0_0_20px_rgba(6,203,173,0.22)] transition hover:scale-[1.01]"
+              >Cerrar sesión</button
+            >
+          </form>
+        </div>
+      </div>
+    </aside>
+
+    <main class="min-w-0 flex-1 lg:pl-72">
+      <header
+        class="sticky top-0 z-20 border-b border-white/10 bg-[rgba(13,19,24,0.76)] px-5 py-4 backdrop-blur"
+      >
+        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4">
+          <div>
+            <p
+              class="text-xs font-semibold uppercase tracking-wide text-white/45"
+            >
+              CRM privado
+            </p>
+            <h1 class="mt-1 text-2xl font-black tracking-tight text-white">
+              {title}
+            </h1>
+          </div>
+          <div
+            class="hidden items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 shadow-[0_0_24px_rgba(82,51,255,0.14)] backdrop-blur md:flex"
+          >
+            <div
+              class="h-9 w-9 rounded-full bg-gradient-to-r from-[var(--altaria-cyan)] to-brand-500 text-center text-sm font-black leading-9 text-white"
+            >
+              {user?.name?.slice(0, 1) || "A"}
+            </div>
+            <div>
+              <p class="text-sm font-bold text-white">{user?.name}</p>
+              <p class="text-xs text-white/50">{user?.role}</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="mx-auto max-w-7xl px-5 py-6">
+        <slot />
+      </section>
+    </main>
+  </div>
+</BaseLayout>

@@ -1,0 +1,31 @@
+{
+  "name": "altaria-crm-tailwind",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "db:init": "node scripts/init-db.mjs",
+    "user:create": "node scripts/create-user.mjs",
+    "user:password": "node scripts/hash-password.mjs"
+  },
+  "dependencies": {
+    "@astrojs/react": "latest",
+    "@astrojs/vercel": "latest",
+    "@libsql/client": "latest",
+    "@tailwindcss/vite": "latest",
+    "astro": "latest",
+    "jose": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "tailwindcss": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest"
+  },
+  "packageManager": "pnpm@10.0.0"
+}
