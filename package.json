@@ -15,6 +15,7 @@
     "@astrojs/vercel": "latest",
     "@libsql/client": "latest",
     "@tailwindcss/vite": "latest",
+    "@vercel/blob": "^2.4.0",
     "astro": "latest",
     "jose": "latest",
     "react": "latest",
