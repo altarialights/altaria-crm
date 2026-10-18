@@ -3,9 +3,23 @@
   "configurations": [
     {
       "command": "./node_modules/.bin/astro dev",
-      "name": "Development server",
+      "cwd": "${workspaceFolder}/apps/web",
+      "name": "Web dev server",
       "request": "launch",
       "type": "node-terminal"
+    },
+    {
+      "command": "./node_modules/.bin/wrangler dev",
+      "cwd": "${workspaceFolder}/apps/api",
+      "name": "API dev server",
+      "request": "launch",
+      "type": "node-terminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Web + API",
+      "configurations": ["Web dev server", "API dev server"]
     }
   ]
 }
