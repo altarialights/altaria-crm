@@ -34,6 +34,7 @@ Run from the repo root:
 | Lint | `pnpm lint` |
 | Typecheck | `pnpm typecheck` |
 | Deploy API | `pnpm turbo run deploy --filter=@altaria/api` |
+| Deploy web | `pnpm turbo run deploy --filter=@altaria/web` |
 
 Add a dependency to one app with `pnpm add <pkg> --filter @altaria/<app>`. Never create a lockfile inside an app; the only lockfile is `pnpm-lock.yaml` at the root.
 

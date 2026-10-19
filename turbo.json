@@ -22,7 +22,7 @@
       "dependsOn": ["^typecheck"]
     },
     "deploy": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build"],
       "cache": false
     }
   }

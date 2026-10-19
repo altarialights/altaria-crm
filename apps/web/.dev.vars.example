@@ -1,0 +1,7 @@
+# Copy to .dev.vars for local secrets used by `astro dev` (never commit .dev.vars).
+# In production, set each one with `pnpm --filter @altaria/web exec wrangler secret put <NAME>`.
+
+# Clerk Dashboard → API keys (same Clerk instance as the API)
+PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
+CLERK_SECRET_KEY=sk_test_xxx
+	

@@ -1,3 +1,10 @@
 # Copy to .dev.vars for local secrets used by `wrangler dev` (never commit .dev.vars).
-# In production, set secrets with `pnpm --filter @altaria/api exec wrangler secret put <NAME>`.
-# EXAMPLE_SECRET=change-me
+# In production, set each one with `pnpm --filter @altaria/api exec wrangler secret put <NAME>`.
+
+# Clerk Dashboard → API keys (same Clerk instance as the web app)
+CLERK_SECRET_KEY=sk_test_xxx
+CLERK_PUBLISHABLE_KEY=pk_test_xxx
+
+# Turso: `turso db show <db> --url` and `turso db tokens create <db>`
+TURSO_DATABASE_URL=libsql://<db>-<org>.turso.io
+TURSO_AUTH_TOKEN=xxx

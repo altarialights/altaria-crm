@@ -1,17 +1,7 @@
 ---
-import '../styles/global.css';
+import AppLayout from '../layouts/AppLayout.astro';
 ---
 
-<html lang="es">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Altaria CRM</title>
-	</head>
-	<body>
-		<h1>Altaria CRM</h1>
-	</body>
-</html>
+<AppLayout title="Inicio">
+	<h1 class="text-2xl font-semibold tracking-tight">Inicio</h1>
+</AppLayout>

@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Must match the Worker name in the Cloudflare dashboard (Workers Builds fails otherwise)
+  "name": "altaria-crm-web",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "compatibility_date": "2026-10-12",
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 1 }
+  },
+  "vars": {
+    // Base URL of the API Worker, read at runtime and passed to the browser
+    "API_URL": "http://localhost:8787",
+    // Without keys Clerk would silently create a throwaway instance; fail loudly instead
+    "CLERK_KEYLESS_DISABLED": "true"
+  },
+  // Values live in .dev.vars locally and in `wrangler secret put` in production
+  "secrets": {
+    "required": ["PUBLIC_CLERK_PUBLISHABLE_KEY", "CLERK_SECRET_KEY"]
+  }
+}

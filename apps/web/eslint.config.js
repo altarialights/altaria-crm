@@ -8,7 +8,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig(
-	globalIgnores(['dist/', '.astro/']),
+	globalIgnores(['dist/', '.astro/', '.wrangler/', 'worker-configuration.d.ts']),
 
 	js.configs.recommended,
 
