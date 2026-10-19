@@ -8,7 +8,36 @@ Astro (server output) on Vercel via `@astrojs/vercel`, React islands, Tailwind, 
 - `/login` is a catch-all route (`src/pages/login/[...login].astro`) because Clerk's `<SignIn />` uses sub-paths for multi-step sign-in.
 - There is no sign-up page. Sign-up is closed in the Clerk Dashboard (invite-only); hiding UI alone is not access control.
 - Calls to the API: get a fresh token with `getToken()` (`useAuth()` from `@clerk/astro/react` in islands, `Astro.locals.auth().getToken()` on the server) right before each call and use `apiFetch` ([src/lib/api.ts](src/lib/api.ts)). Session tokens live ~60s; never cache them.
-- The API base URL is `PUBLIC_API_URL` (typed via `astro:env/client`, default `http://localhost:8787`); `apiFetch` already uses it.
+- The API base URL is `PUBLIC_API_URL` (typed via `astro:env/client`, default `https://altaria-crm.altarialights.workers.dev`); `apiFetch` already uses it. Set it to `http://localhost:8787` in `.env` when running a local API.
+
+## Design
+
+Colors and font come from the brand site, altarialights.com. The tokens live in the `@theme` of [src/styles/global.css](src/styles/global.css) and generate the Tailwind utilities. **Use them instead of Tailwind's default palettes** (no `slate`, `gray`, `blue`...):
+
+| Use | Classes |
+|-----|---------|
+| Body text, headings | `text-brand-900` (navy, inherited from `<body>`) |
+| Secondary / faint text | `text-ink-600` / `text-ink-400` |
+| Primary button | `bg-brand-600 text-white hover:bg-brand-900` |
+| Soft button, hover, active item | `bg-brand-50` / `bg-brand-100` |
+| Links | `text-brand-600 hover:text-brand-700` |
+| Borders | `border-ink-200` |
+| Surfaces | `bg-white` on the `bg-brand-50` page background |
+| Icons and small highlights | `text-accent` (electric blue of the logo, never large areas) |
+
+- Status colors (success, warning, error) have no brand token yet: use Tailwind's `emerald`, `amber` and `red`.
+- Font: Geist Variable (`@fontsource-variable/geist`, self-hosted), set as `--font-sans`.
+- Clerk components are themed with `appearance` in [astro.config.mjs](astro.config.mjs) using the same hex values, because Clerk can't read CSS variables. Change both together.
+- Favicons are the brand site's ones, in `public/`.
+
+## Layout and navigation
+
+- [src/layouts/AppLayout.astro](src/layouts/AppLayout.astro) is the authenticated shell: sidebar on the left (fixed from `lg` up, drawer below), content on the right. Add menu entries in [src/lib/navigation.ts](src/lib/navigation.ts).
+- The sidebar is a React component hydrated with `client:load` for desktop flyouts and the mobile drawer. The toggle is hydrated only below `lg` (`client:media`). The active item is resolved on the server from `Astro.url.pathname`.
+- Menu entries can have `children`: they open in a flyout on desktop hover, click or keyboard, and inline on mobile. Desktop panels are portalled outside the scrollable navigation to prevent clipping.
+- Clerk's `UserButton` is the Astro component passed into the sidebar as a slot (React can't render Astro components, and the slot is never re-rendered by React).
+- Islands that share state use nanostores ([src/stores/](src/stores/)), e.g. the drawer's open state between `SidebarToggle` and `Sidebar`.
+- The gallery (`src/components/gallery/`) is a React island on `/tarjetas/galeria`. It uses authenticated `/v1/gallery` calls; `/tarjetas/archivo/[id].ts` proxies private images with a fresh server-side Clerk token so native `<img>` and downloads work without exposing tokens in URLs.
 
 ## Configuration
 

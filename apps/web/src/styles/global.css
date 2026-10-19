@@ -1,1 +1,50 @@
 @import "tailwindcss";
+
+/*
+ * Altaria design tokens, taken from altarialights.com. Each one generates its Tailwind utilities
+ * (bg-brand-600, text-ink-500, border-ink-200, font-sans...). Usage conventions: apps/web/AGENTS.md.
+ * Clerk can't read CSS variables: if a color here changes, update `appearance` in astro.config.mjs.
+ */
+@theme {
+	--font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+
+	/* Brand blue: 600 is the primary (buttons, links), 900 the navy used for text */
+	--color-brand-50: #f3f9fd;
+	--color-brand-100: #eaf4fb;
+	--color-brand-200: #dbeefa;
+	--color-brand-300: #a8d0f1;
+	--color-brand-400: #7dbcea;
+	--color-brand-500: #2b81d4;
+	--color-brand-600: #1d6fc0;
+	--color-brand-700: #14508c;
+	--color-brand-800: #113d6e;
+	--color-brand-900: #0f2c56;
+	--color-brand-950: #0a1d3a;
+
+	/* Electric blue of the logo: icons and small highlights only, never large areas */
+	--color-accent: #016ffc;
+
+	/* Blue-tinted greys: borders, secondary text, subtle backgrounds */
+	--color-ink-50: #f6f8fa;
+	--color-ink-100: #eef1f4;
+	--color-ink-200: #e2e8ee;
+	--color-ink-300: #c3d5e4;
+	--color-ink-400: #7e94aa;
+	--color-ink-500: #5f7489;
+	--color-ink-600: #42556a;
+	--color-ink-700: #334355;
+	--color-ink-800: #232f3d;
+	--color-ink-900: #141a24;
+	--color-ink-950: #0e1620;
+}
+
+@layer base {
+	:focus-visible {
+		outline: 2px solid var(--color-brand-600);
+		outline-offset: 2px;
+	}
+
+	::selection {
+		background-color: var(--color-brand-200);
+	}
+}

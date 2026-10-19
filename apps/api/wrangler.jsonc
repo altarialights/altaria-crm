@@ -1,20 +1,39 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   // Must match the Worker name in the Cloudflare dashboard (Workers Builds fails otherwise)
-  "name": "altaria-crm-api",
+  "name": "altaria-crm",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-12",
   "observability": {
     "enabled": true,
-    "logs": { "enabled": true, "head_sampling_rate": 1 },
-    "traces": { "enabled": true, "head_sampling_rate": 1 }
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1
+    }
   },
   "vars": {
     // Origins of the web app (comma-separated): allowed by CORS and accepted as Clerk authorized parties
     "WEB_ORIGINS": "http://localhost:4321"
   },
+  "r2_buckets": [
+    {
+      "binding": "GALLERY_BUCKET",
+      "bucket_name": "altaria-crm",
+      // Share the real bucket with the remote Turso database, including during development.
+      "remote": true
+    }
+  ],
   // Values live in .dev.vars locally and in `wrangler secret put` in production
   "secrets": {
-    "required": ["CLERK_SECRET_KEY", "CLERK_PUBLISHABLE_KEY", "TURSO_DATABASE_URL", "TURSO_AUTH_TOKEN"]
+    "required": [
+      "CLERK_SECRET_KEY",
+      "CLERK_PUBLISHABLE_KEY",
+      "TURSO_DATABASE_URL",
+      "TURSO_AUTH_TOKEN"
+    ]
   }
 }

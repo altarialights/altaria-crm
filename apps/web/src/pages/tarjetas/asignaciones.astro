@@ -1,0 +1,19 @@
+---
+import { CreditCard } from 'lucide-react';
+import AppLayout from '../../layouts/AppLayout.astro';
+---
+
+<AppLayout title="Asignaciones de tarjetas">
+	<p class="mb-2 text-sm text-ink-500">Tarjetas / Asignaciones</p>
+	<h1 class="text-2xl font-semibold tracking-tight">Asignaciones</h1>
+	<p class="mt-2 text-sm text-ink-600">Gestiona las tarjetas de tus clientes y sus destinos.</p>
+
+	<section class="mt-8 flex flex-col items-center rounded-2xl border border-ink-200 bg-white px-6 py-16 text-center">
+		<div class="mb-5 grid size-14 place-items-center rounded-2xl bg-brand-50">
+			<CreditCard className="size-6 text-brand-600" aria-hidden="true" />
+		</div>
+		<h2 class="text-lg font-semibold">Cada tarjeta, en su sitio</h2>
+		<p class="mt-2 max-w-md text-sm leading-6 text-ink-600">Aquí podrás asignar tarjetas a clientes y actualizar el destino de sus enlaces QR y NFC.</p>
+		<span class="mt-5 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">Próximamente</span>
+	</section>
+</AppLayout>

@@ -19,7 +19,7 @@ export default defineConfig({
   env: {
     schema: {
       // Base URL of the API Worker, inlined into client code at build time
-      PUBLIC_API_URL: envField.string({ context: 'client', access: 'public', default: 'http://localhost:8787' }),
+      PUBLIC_API_URL: envField.string({ context: 'client', access: 'public', default: 'https://altaria-crm.altarialights.workers.dev' }),
     },
   },
 
@@ -27,6 +27,17 @@ export default defineConfig({
     react(),
     clerk({
       localization: esES,
+      // Brand tokens from src/styles/global.css (Clerk can't read CSS variables): keep them in sync
+      appearance: {
+        variables: {
+          colorPrimary: '#1d6fc0', // brand-600
+          colorForeground: '#0f2c56', // brand-900
+          colorMutedForeground: '#42556a', // ink-600
+          colorNeutral: '#0f2c56', // brand-900, tints borders and hovers
+          fontFamily: '"Geist Variable", ui-sans-serif, system-ui, sans-serif',
+          borderRadius: '0.5rem',
+        },
+      },
       signInUrl: '/login',
       afterSignOutUrl: '/login',
     }),

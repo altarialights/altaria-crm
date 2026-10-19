@@ -8,6 +8,9 @@
     "build": "wrangler deploy --dry-run --outdir dist",
     "deploy": "wrangler deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "db:migrate": "node --env-file-if-exists=.dev.vars scripts/migrate.js",
+    "test:db": "node --test scripts/migrate.test.js",
+    "test:gallery": "tsx --test scripts/gallery.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
@@ -21,6 +24,7 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.20.5",
     "eslint": "^10.13.0",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.71.2",
     "wrangler": "^4.151.1"

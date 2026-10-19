@@ -1,17 +1,20 @@
 import { env } from 'cloudflare:workers';
 import { Hono } from 'hono';
-import { bodyLimit } from 'hono/body-limit';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { secureHeaders } from 'hono/secure-headers';
 import { createDb } from './db';
+import { galleryRoutes } from './gallery/routes';
 import { parseOrigins } from './lib/origins';
 import { requireAuth } from './middleware/auth';
+import { requestBodyLimit } from './middleware/body-limit';
 import type { AppEnv } from './types';
 
 // Everything under /v1 requires a signed-in Clerk user
 const v1 = new Hono<AppEnv>()
 	.use(requireAuth)
+	.use(requestBodyLimit)
+	.route('/gallery', galleryRoutes)
 	.get('/me', (c) => c.json(c.var.auth))
 	.get('/db/health', async (c) => {
 		const startedAt = Date.now();
@@ -29,7 +32,6 @@ const app = new Hono<AppEnv>()
 			maxAge: 600,
 		}),
 	)
-	.use(bodyLimit({ maxSize: 1024 * 1024 }))
 	.get('/health', (c) => c.json({ status: 'ok' }))
 	.route('/v1', v1);
 
@@ -37,7 +39,7 @@ app.notFound((c) => c.json({ error: 'Not Found' }, 404));
 
 app.onError((err, c) => {
 	if (err instanceof HTTPException) {
-		return err.getResponse();
+		return c.json({ error: err.message }, err.status);
 	}
 	console.error(JSON.stringify({ message: 'unhandled error', error: err.message, path: c.req.path }));
 	return c.json({ error: 'Internal Server Error' }, 500);
