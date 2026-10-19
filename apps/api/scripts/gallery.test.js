@@ -120,6 +120,10 @@ test('image pagination is deterministic and search treats SQL wildcards as liter
 	const second = await service.listImages({ page: 2 });
 	assert.equal(first.images.length, 24); assert.equal(second.images.length, 3);
 	assert.equal(new Set([...first.images, ...second.images].map((image) => image.id)).size, 27);
+	const smallerPages = await Promise.all(Array.from({ length: 5 }, (_, index) => service.listImages({ page: index + 1, pageSize: 6 })));
+	assert.deepEqual(smallerPages.map((entry) => entry.images.length), [6, 6, 6, 6, 3]);
+	assert.equal(new Set(smallerPages.flatMap((entry) => entry.images.map((image) => image.id))).size, 27);
+	for (const pageSize of [0, -1, 25, 1.5, NaN]) await assert.rejects(service.listImages({ pageSize }), { status: 400 });
 	assert.equal((await service.listImages({ search: '%_' })).total, 1);
 	assert.equal((await service.listImages({ folderId: randomUUID() })).total, 0);
 	await assert.rejects(service.listImages({ page: -1 }), { status: 400 });
@@ -142,6 +146,9 @@ test('HTTP gallery routes: multipart upload, JSON errors, content streaming and 
 	const body = new FormData(); body.set('file', pngFile());
 	const upload = await call(`/folders/${folder.id}/images`, { method: 'POST', body });
 	assert.equal(upload.status, 201); const image = await upload.json();
+	const listing = await (await call('/images?pageSize=1')).json();
+	assert.equal(listing.pageSize, 1); assert.equal(listing.images[0].id, image.id);
+	assert.equal((await call('/images?pageSize=25')).status, 400);
 	const content = await call(`/images/${image.id}/file`); assert.equal(content.status, 200);
 	assert.deepEqual(new Uint8Array(await content.arrayBuffer()), png);
 	assert.equal((await call(`/images/${image.id}`, { method: 'DELETE' })).status, 200);

@@ -3,7 +3,7 @@ import Gallery from "../../components/gallery/Gallery";
 import AppLayout from "../../layouts/AppLayout.astro";
 ---
 
-<AppLayout title="Galería de tarjetas">
-	<p class="mb-2 text-sm text-ink-500">Tarjetas / Galería</p>
+<AppLayout title="Galería de tarjetas" scrollable={false}>
+	<p class="mb-2 shrink-0 text-sm text-ink-500">Tarjetas / Galería</p>
 	<Gallery client:load />
 </AppLayout>

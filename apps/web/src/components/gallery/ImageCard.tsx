@@ -2,13 +2,13 @@ import { ImageOff, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { formatBytes, imageUrl, type GalleryImage } from '../../lib/gallery';
 
-export default function ImageCard({ image, onPreview, onRename, onDelete }: {
-	image: GalleryImage; onPreview: () => void; onRename: () => void; onDelete: () => void;
+export default function ImageCard({ image, previewHeight, onPreview, onRename, onDelete }: {
+	image: GalleryImage; previewHeight: number; onPreview: () => void; onRename: () => void; onDelete: () => void;
 }) {
 	const [failed, setFailed] = useState(false);
 	return (
 		<li className="group overflow-hidden rounded-xl border border-ink-200 bg-white transition-shadow hover:shadow-md hover:shadow-brand-950/5">
-			<button type="button" className="block aspect-video w-full overflow-hidden bg-brand-50 p-3" onClick={onPreview} aria-label={`Ver ${image.name}`}>
+			<button type="button" className="block aspect-video w-full overflow-hidden bg-brand-50 p-3" style={{ maxHeight: previewHeight }} onClick={onPreview} aria-label={`Ver ${image.name}`}>
 				{failed ? <span className="flex h-full flex-col items-center justify-center gap-2 text-xs text-ink-500"><ImageOff className="size-6" />No se pudo cargar la imagen</span>
 					: <img src={imageUrl(image.id)} alt={image.name} loading="lazy" decoding="async" width={480} height={270} onError={() => setFailed(true)} className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-[1.03] motion-reduce:transition-none" />}
 			</button>

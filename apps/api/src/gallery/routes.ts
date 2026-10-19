@@ -25,7 +25,7 @@ export function createGalleryRoutes(database: typeof createDb = createDb) {
 	.post('/folders', async (c) => c.json(await c.var.gallery.createFolder(await readName(c.req.raw)), 201))
 	.patch('/folders/:id', async (c) => c.json(await c.var.gallery.renameFolder(c.req.param('id'), await readName(c.req.raw))))
 	.delete('/folders/:id', async (c) => { await c.var.gallery.deleteFolder(c.req.param('id')); return c.json({ success: true }); })
-	.get('/images', async (c) => c.json(await c.var.gallery.listImages({ folderId: c.req.query('folderId'), search: c.req.query('search'), page: Number(c.req.query('page') ?? 1) })))
+	.get('/images', async (c) => c.json(await c.var.gallery.listImages({ folderId: c.req.query('folderId'), search: c.req.query('search'), page: Number(c.req.query('page') ?? 1), pageSize: Number(c.req.query('pageSize') ?? 24) })))
 	.post('/folders/:id/images', async (c) => {
 		let form: FormData;
 		try { form = await c.req.formData(); } catch { throw new HTTPException(400, { message: 'No se pudo leer el archivo.' }); }

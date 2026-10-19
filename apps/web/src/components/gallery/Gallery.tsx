@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/astro/react';
 import { CheckCircle2, ChevronLeft, ChevronRight, Download, Folder, FolderOpen, FolderPlus, Images, LoaderCircle, Pencil, Search, Trash2, Upload, X } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../../lib/api';
 import { errorMessage, fieldClass, formatBytes, imageUrl, primaryButton, secondaryButton, type GalleryFolder, type GalleryImage, type ImageListing } from '../../lib/gallery';
 import Modal from './Modal';
@@ -23,6 +23,9 @@ export function GalleryView({ getToken }: { getToken: () => Promise<string | nul
 	const [searchInput, setSearchInput] = useState('');
 	const [search, setSearch] = useState('');
 	const [page, setPage] = useState(1);
+	const gridAreaRef = useRef<HTMLDivElement>(null);
+	const previousCapacityRef = useRef(0);
+	const [grid, setGrid] = useState({ columns: 1, pageSize: 0, previewHeight: 0 });
 	const [refresh, setRefresh] = useState(0);
 	const [loading, setLoading] = useState(true);
 	const [loadError, setLoadError] = useState('');
@@ -35,14 +38,38 @@ export function GalleryView({ getToken }: { getToken: () => Promise<string | nul
 	const request = useCallback(async <T,>(path: string, init?: RequestInit) => apiFetch<T>(`/v1/gallery${path}`, await getToken(), init), [getToken]);
 
 	useEffect(() => {
+		const area = gridAreaRef.current;
+		if (!area) return;
+		const observer = new ResizeObserver(([entry]) => {
+			const { width, height } = entry.contentRect;
+			if (!width || !height) return;
+			const columns = Math.max(1, Math.min(6, Math.floor((width + 16) / 266)));
+			// Reserve the card footer/borders and the 16px gaps before fitting rows.
+			const cardWidth = (width - 16 * (columns - 1)) / columns;
+			const previewHeight = Math.max(0, Math.min((cardWidth - 2) * 9 / 16, height - 68));
+			const rows = Math.max(1, Math.floor((height + 16) / (previewHeight + 68 + 16)));
+			const pageSize = Math.min(24, columns * rows);
+			const oldCapacity = previousCapacityRef.current;
+			if (oldCapacity && oldCapacity !== pageSize) {
+				// Keep the first visible design on the current page after a resize.
+				setPage((previous) => Math.floor((previous - 1) * oldCapacity / pageSize) + 1);
+			}
+			previousCapacityRef.current = pageSize;
+			setGrid((previous) => previous.columns === columns && previous.pageSize === pageSize && previous.previewHeight === previewHeight ? previous : { columns, pageSize, previewHeight });
+		});
+		observer.observe(area);
+		return () => observer.disconnect();
+	}, []);
+	useEffect(() => {
 		const timer = setTimeout(() => { setSearch(searchInput.trim()); setPage(1); }, 250);
 		return () => clearTimeout(timer);
 	}, [searchInput]);
 	useEffect(() => {
+		if (!grid.pageSize) return;
 		const controller = new AbortController();
 		async function load() {
 			setLoading(true); setLoadError('');
-			const query = new URLSearchParams({ page: String(page) });
+			const query = new URLSearchParams({ page: String(page), pageSize: String(grid.pageSize) });
 			if (folderId) query.set('folderId', folderId);
 			if (search) query.set('search', search);
 			try {
@@ -61,7 +88,7 @@ export function GalleryView({ getToken }: { getToken: () => Promise<string | nul
 		}
 		void load();
 		return () => controller.abort();
-	}, [folderId, page, search, refresh, request]);
+	}, [folderId, page, grid.pageSize, search, refresh, request]);
 
 	function openDialog(value: DialogState) {
 		setDialogError(''); setNotice('');
@@ -97,47 +124,47 @@ export function GalleryView({ getToken }: { getToken: () => Promise<string | nul
 
 	return (
 		<div className="flex min-h-0 flex-1 flex-col">
-			<div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+			<div className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-3 sm:mb-6">
 				<h1 className="text-2xl font-semibold tracking-tight">Galería de diseños</h1>
 				<div className="flex flex-wrap gap-2">
 					<button type="button" onClick={() => openDialog({ kind: 'create' })} className={secondaryButton}><FolderPlus className="size-4" />Nueva carpeta</button>
 					<button type="button" disabled={!folders.length || loading || !!loadError} onClick={() => openDialog({ kind: 'upload' })} className={primaryButton}><Upload className="size-4" />Subir imágenes</button>
 				</div>
 			</div>
-			{notice && <div role="status" className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"><CheckCircle2 className="mt-0.5 size-4 shrink-0" /><span className="flex-1">{notice}</span><button type="button" aria-label="Cerrar aviso" onClick={() => setNotice('')}><X className="size-4" /></button></div>}
-			<div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white lg:grid lg:grid-cols-[230px_minmax(0,1fr)]">
-				<aside aria-label="Carpetas de diseños" className="border-b border-ink-200 bg-ink-50/50 p-4 lg:border-r lg:border-b-0">
-					<h2 className="mb-3 px-2 text-xs font-medium tracking-wider text-ink-400 uppercase">Biblioteca</h2>
-					<ul className="space-y-1">
+			{notice && <div role="status" className="fixed top-4 right-4 z-40 flex max-w-[calc(100vw-2rem)] items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm"><CheckCircle2 className="mt-0.5 size-4 shrink-0" /><span className="flex-1">{notice}</span><button type="button" aria-label="Cerrar aviso" onClick={() => setNotice('')}><X className="size-4" /></button></div>}
+			<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
+				<aside aria-label="Carpetas de diseños" className="min-h-0 shrink-0 border-b border-ink-200 bg-ink-50/50 p-3 lg:overflow-y-auto lg:border-r lg:border-b-0 lg:p-4">
+					<h2 className="mb-3 hidden px-2 text-xs font-medium tracking-wider text-ink-400 uppercase lg:block">Biblioteca</h2>
+					<ul className="flex gap-1 overflow-x-auto lg:block lg:space-y-1 lg:overflow-visible [&>li]:shrink-0">
 						<li><button type="button" onClick={() => chooseFolder('')} aria-pressed={!folderId} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-ink-600 hover:bg-brand-50 aria-pressed:bg-brand-100 aria-pressed:font-medium aria-pressed:text-brand-900"><Images className="size-4 shrink-0 text-brand-600" /><span className="flex-1">Todos los diseños</span><span className="text-xs tabular-nums text-ink-400">{totalImages}</span></button></li>
 						{folders.map((folder) => <li key={folder.id}><button type="button" onClick={() => chooseFolder(folder.id)} aria-pressed={folderId === folder.id} className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-ink-600 hover:bg-brand-50 aria-pressed:bg-brand-100 aria-pressed:font-medium aria-pressed:text-brand-900"><Folder className="size-4 shrink-0 text-ink-400" /><span className="min-w-0 flex-1 truncate" title={folder.name}>{folder.name}</span><span className="text-xs tabular-nums text-ink-400">{folder.imageCount}</span></button></li>)}
 					</ul>
-					<button type="button" className="mt-4 flex items-center gap-2 px-3 py-2 text-sm text-brand-600 hover:text-brand-900" onClick={() => openDialog({ kind: 'create' })}><FolderPlus className="size-4" />Crear carpeta</button>
+					<button type="button" className="mt-4 hidden items-center gap-2 px-3 py-2 text-sm text-brand-600 hover:text-brand-900 lg:flex" onClick={() => openDialog({ kind: 'create' })}><FolderPlus className="size-4" />Crear carpeta</button>
 				</aside>
-				<section aria-label="Diseños" aria-busy={loading} className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
-					<div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-						<div className="flex min-w-0 items-center gap-2"><h2 className="truncate font-semibold">{selectedFolder?.name ?? 'Todos los diseños'}</h2>{selectedFolder && <>
+				<section aria-label="Diseños" aria-busy={loading} className="flex min-h-0 min-w-0 flex-1 flex-col p-5 sm:p-6">
+					<div className="mb-4 flex shrink-0 items-center justify-between gap-3 sm:mb-6">
+						<div className="flex min-w-0 flex-1 items-center gap-2"><h2 className="truncate font-semibold">{selectedFolder?.name ?? 'Todos los diseños'}</h2>{selectedFolder && <>
 							<button type="button" title="Cambiar nombre de carpeta" aria-label="Cambiar nombre de carpeta" onClick={() => openDialog({ kind: 'renameFolder', folder: selectedFolder })} className="rounded-lg p-2 text-ink-400 hover:bg-brand-50 hover:text-brand-600"><Pencil className="size-4" /></button>
 							<button type="button" disabled={!!selectedFolder.imageCount} title={selectedFolder.imageCount ? 'Vacía la carpeta antes de eliminarla' : 'Eliminar carpeta'} aria-label="Eliminar carpeta" onClick={() => openDialog({ kind: 'deleteFolder', folder: selectedFolder })} className="rounded-lg p-2 text-ink-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30"><Trash2 className="size-4" /></button>
 						</>}</div>
-						<label className="relative block w-full sm:w-60"><span className="sr-only">Buscar diseños</span><Search className="pointer-events-none absolute top-3 left-3 size-4 text-ink-400" /><input type="search" maxLength={200} placeholder="Buscar diseños…" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} className={`${fieldClass} pl-9`} /></label>
+						<label className="relative block w-32 shrink-0 sm:w-60"><span className="sr-only">Buscar diseños</span><Search className="pointer-events-none absolute top-3 left-3 size-4 text-ink-400" /><input type="search" maxLength={200} placeholder="Buscar diseños…" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} className={`${fieldClass} pl-9`} /></label>
 					</div>
+					<div ref={gridAreaRef} className="min-h-0 flex-1">
 					{loadError ? <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800"><p>{loadError}</p><button type="button" className="mt-3 font-medium underline" onClick={refreshData}>Volver a intentar</button></div>
-						: loading ? <div role="status" className="flex min-h-64 flex-1 items-center justify-center gap-3 text-sm text-ink-500"><LoaderCircle className="size-5 animate-spin" />Cargando diseños…</div>
-						: !listing.images.length ? <div className="flex min-h-72 flex-1 flex-col items-center justify-center px-4 py-10 text-center">
-							<div className="mb-5 grid size-14 place-items-center rounded-2xl bg-brand-50">{search ? <Search className="size-6 text-brand-600" /> : <FolderOpen className="size-6 text-brand-600" />}</div>
+						: loading ? <div role="status" className="flex h-full items-center justify-center gap-3 text-sm text-ink-500"><LoaderCircle className="size-5 animate-spin" />Cargando diseños…</div>
+						: !listing.images.length ? <div className="flex h-full flex-col items-center justify-center px-4 text-center">
+							{grid.previewHeight > 150 && <div className="mb-5 grid size-14 shrink-0 place-items-center rounded-2xl bg-brand-50">{search ? <Search className="size-6 text-brand-600" /> : <FolderOpen className="size-6 text-brand-600" />}</div>}
 							<h3 className="font-semibold">{search ? 'No hay diseños con ese nombre' : !folders.length ? 'Tu primer diseño empieza aquí' : 'Todo listo para tus diseños'}</h3>
 							<p className="mt-2 max-w-sm text-sm leading-6 text-ink-500">{search ? 'Prueba con otra búsqueda o elige otra carpeta.' : !folders.length ? 'Crea una carpeta para organizar las tarjetas de restaurantes, peluquerías o cualquier otro proyecto.' : 'Sube imágenes a una carpeta y ten tus diseños siempre a mano.'}</p>
 							{!search && <button type="button" onClick={() => openDialog({ kind: folders.length ? 'upload' : 'create' })} className={`${primaryButton} mt-6`}>{folders.length ? <Upload className="size-4" /> : <FolderPlus className="size-4" />}{folders.length ? 'Subir imágenes' : 'Crear primera carpeta'}</button>}
-						</div> : <>
-							<ul className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">{listing.images.map((image) => <ImageCard key={image.id} image={image} onPreview={() => openDialog({ kind: 'preview', image })} onRename={() => openDialog({ kind: 'renameImage', image })} onDelete={() => openDialog({ kind: 'deleteImage', image })} />)}</ul>
-							<div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-ink-200 pt-4 text-xs text-ink-500">
-								<p>{(page - 1) * listing.pageSize + 1}–{Math.min(page * listing.pageSize, listing.total)} de {listing.total} diseños</p><div className="flex items-center gap-3">
-									<button type="button" aria-label="Página anterior" disabled={page <= 1} onClick={() => setPage((value) => value - 1)} className="rounded-lg border border-ink-200 p-2 hover:bg-brand-50 disabled:opacity-30"><ChevronLeft className="size-4" /></button><span>{page} / {totalPages}</span>
-									<button type="button" aria-label="Página siguiente" disabled={page >= totalPages} onClick={() => setPage((value) => value + 1)} className="rounded-lg border border-ink-200 p-2 hover:bg-brand-50 disabled:opacity-30"><ChevronRight className="size-4" /></button>
-								</div>
-							</div>
-						</>}
+						</div> : <ul className="grid gap-4" style={{ gridTemplateColumns: `repeat(${grid.columns}, minmax(0, 1fr))` }}>{listing.images.map((image) => <ImageCard key={image.id} image={image} previewHeight={grid.previewHeight} onPreview={() => openDialog({ kind: 'preview', image })} onRename={() => openDialog({ kind: 'renameImage', image })} onDelete={() => openDialog({ kind: 'deleteImage', image })} />)}</ul>}
+					</div>
+					<div className="mt-6 flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-ink-200 pt-4 text-xs text-ink-500">
+						<p>{listing.total ? (page - 1) * listing.pageSize + 1 : 0}–{Math.min(page * listing.pageSize, listing.total)} de {listing.total} diseños</p><div className="flex items-center gap-3">
+							<button type="button" aria-label="Página anterior" disabled={loading || page <= 1} onClick={() => setPage((value) => value - 1)} className="rounded-lg border border-ink-200 p-2 hover:bg-brand-50 disabled:opacity-30"><ChevronLeft className="size-4" /></button><span>{page} / {totalPages}</span>
+							<button type="button" aria-label="Página siguiente" disabled={loading || page >= totalPages} onClick={() => setPage((value) => value + 1)} className="rounded-lg border border-ink-200 p-2 hover:bg-brand-50 disabled:opacity-30"><ChevronRight className="size-4" /></button>
+						</div>
+					</div>
 				</section>
 			</div>
 			{dialog?.kind === 'upload' ? <UploadDialog folders={folders} initialFolderId={folderId} request={request} onClose={() => setDialog(null)} onUploaded={(id, count) => { chooseFolder(id); setSearchInput(''); setNotice(count === 1 ? 'Se ha subido 1 imagen.' : `Se han subido ${count} imágenes.`); refreshData(); }} /> : dialog && <Modal title={dialogTitle} busy={busy} wide={dialog.kind === 'preview'} onClose={() => setDialog(null)}>

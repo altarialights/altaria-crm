@@ -6,9 +6,10 @@ import BaseLayout from './BaseLayout.astro';
 
 interface Props {
 	title: string;
+	scrollable?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, scrollable = true } = Astro.props;
 
 // The drawer toggle only needs JS below `lg`; the sidebar also has desktop flyouts.
 const DRAWER_MEDIA = '(width < 64rem)';
@@ -19,15 +20,15 @@ const DRAWER_MEDIA = '(width < 64rem)';
 		{/* Astro component passed as a slot: React renders it as static HTML and never touches it */}
 		<UserButton />
 	</Sidebar>
-	<div class="flex min-h-dvh flex-col lg:pl-64">
+	<div class="flex h-dvh flex-col overflow-hidden lg:pl-64">
 		{/* Mobile only: from `lg` up the brand and the user menu live in the sidebar */}
-		<header class="border-b border-ink-200 bg-white lg:hidden">
+		<header class="shrink-0 border-b border-ink-200 bg-white lg:hidden">
 			<div class="flex h-14 items-center gap-3 px-4">
 				<SidebarToggle client:media={DRAWER_MEDIA} />
 				<a href="/" class="font-semibold tracking-tight">Altaria CRM</a>
 			</div>
 		</header>
-		<main class="flex flex-1 flex-col px-4 py-8 lg:px-6">
+		<main class:list={["flex min-h-0 flex-1 flex-col px-4 py-4 sm:py-8 lg:px-6", scrollable ? "overflow-y-auto" : "overflow-hidden"]}>
 			<slot />
 		</main>
 	</div>

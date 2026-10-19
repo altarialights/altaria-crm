@@ -101,7 +101,7 @@ export class GalleryService {
 			throw new HTTPException(existing.rows.length ? 409 : 404, { message: existing.rows.length ? 'Vacía la carpeta antes de eliminarla.' : 'La carpeta ya no existe.' });
 		}
 	}
-	async listImages(options: { folderId?: string; search?: string; page?: number }) {
+	async listImages(options: { folderId?: string; search?: string; page?: number; pageSize?: number }) {
 		const conditions: string[] = [];
 		const args: InValue[] = [];
 		if (options.folderId) { conditions.push('i.folder_id = ?'); args.push(validId(options.folderId)); }
@@ -110,13 +110,15 @@ export class GalleryService {
 		if (search) { conditions.push("(i.name LIKE ? ESCAPE '\\' OR i.original_filename LIKE ? ESCAPE '\\')"); const pattern = `%${search.replace(/[\\%_]/g, '\\$&')}%`; args.push(pattern, pattern); }
 		const page = options.page ?? 1;
 		if (!Number.isSafeInteger(page) || page < 1 || page > 100000) throw new HTTPException(400, { message: 'Página no válida.' });
+		const pageSize = options.pageSize ?? IMAGE_PAGE_SIZE;
+		if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > IMAGE_PAGE_SIZE) throw new HTTPException(400, { message: 'Tamaño de página no válido.' });
 		const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 		const result = await this.db.batch([
 			{ sql: `SELECT count(*) AS total FROM gallery_images i ${where}`, args },
 			{ sql: `SELECT i.*, f.name AS folder_name FROM gallery_images i JOIN gallery_folders f ON f.id = i.folder_id ${where}
-				ORDER BY i.created_at DESC, i.id DESC LIMIT ? OFFSET ?`, args: [...args, IMAGE_PAGE_SIZE, (page - 1) * IMAGE_PAGE_SIZE] },
+				ORDER BY i.created_at DESC, i.id DESC LIMIT ? OFFSET ?`, args: [...args, pageSize, (page - 1) * pageSize] },
 		], 'read');
-		return { images: result[1].rows.map(image), total: Number(result[0].rows[0].total), page, pageSize: IMAGE_PAGE_SIZE };
+		return { images: result[1].rows.map(image), total: Number(result[0].rows[0].total), page, pageSize };
 	}
 	async upload(folderId: string, file: File) {
 		validId(folderId);
