@@ -1,6 +1,6 @@
 ## Stack
 
-Astro (server output) on Cloudflare Workers via `@astrojs/cloudflare`, React islands, Tailwind, Clerk (`@clerk/astro`, Spanish localization).
+Astro (server output) on Vercel via `@astrojs/vercel`, React islands, Tailwind, Clerk (`@clerk/astro`, Spanish localization). The API it talks to runs separately on Cloudflare Workers (`apps/api`).
 
 ## Auth
 
@@ -8,13 +8,14 @@ Astro (server output) on Cloudflare Workers via `@astrojs/cloudflare`, React isl
 - `/login` is a catch-all route (`src/pages/login/[...login].astro`) because Clerk's `<SignIn />` uses sub-paths for multi-step sign-in.
 - There is no sign-up page. Sign-up is closed in the Clerk Dashboard (invite-only); hiding UI alone is not access control.
 - Calls to the API: get a fresh token with `getToken()` (`useAuth()` from `@clerk/astro/react` in islands, `Astro.locals.auth().getToken()` on the server) right before each call and use `apiFetch` ([src/lib/api.ts](src/lib/api.ts)). Session tokens live ~60s; never cache them.
-- The API base URL is the runtime var `API_URL` (`import { env } from 'cloudflare:workers'`), passed to islands as a prop.
+- The API base URL is `PUBLIC_API_URL` (typed via `astro:env/client`, default `http://localhost:8787`); `apiFetch` already uses it.
 
 ## Configuration
 
-- Runtime vars and secrets come from `cloudflare:workers` `env`, not `import.meta.env`. Secrets are declared in `wrangler.jsonc` → `secrets.required`; local values go in `.dev.vars` (copy `.dev.vars.example`).
-- After changing `wrangler.jsonc`, run `pnpm cf-typegen` and commit `worker-configuration.d.ts`.
-- Astro sessions are disabled (`session: false`) and images use `passthrough`, so no KV or Images bindings are provisioned.
+- Env vars: local values in `.env` (copy `.env.example`); production values in Vercel → Project → Settings → Environment Variables. Declare new ones in the `env.schema` of [astro.config.mjs](astro.config.mjs) and read them from `astro:env/client` / `astro:env/server`.
+- `PUBLIC_*` vars are inlined at build time: changing them in Vercel requires a redeploy.
+- Clerk keyless mode is disabled in `astro.config.mjs`, so missing Clerk keys fail loudly instead of creating a throwaway instance.
+- Vercel project: Root Directory `apps/web`; it builds with `astro build` and deploys on every push to `main`.
 
 ## Development
 

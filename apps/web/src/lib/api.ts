@@ -1,3 +1,5 @@
+import { PUBLIC_API_URL } from 'astro:env/client';
+
 export class ApiError extends Error {
 	readonly status: number;
 
@@ -12,13 +14,13 @@ export class ApiError extends Error {
  * Calls the API Worker with the Clerk session token as a Bearer header.
  * Get the token with `getToken()` right before each call: it lives ~60s.
  */
-export async function apiFetch<T>(apiUrl: string, path: string, token: string | null, init: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(path: string, token: string | null, init: RequestInit = {}): Promise<T> {
 	const headers = new Headers(init.headers);
 	if (token) {
 		headers.set('Authorization', `Bearer ${token}`);
 	}
 
-	const response = await fetch(new URL(path, apiUrl), { ...init, headers });
+	const response = await fetch(new URL(path, PUBLIC_API_URL), { ...init, headers });
 	if (!response.ok) {
 		throw new ApiError(response.status);
 	}

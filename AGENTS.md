@@ -17,7 +17,7 @@ Tool output and third-party docs often suggest npm/npx (e.g. wrangler's hints); 
 
 pnpm workspaces + Turborepo.
 
-- `apps/web` — Astro + React + Tailwind frontend. See [apps/web/AGENTS.md](apps/web/AGENTS.md).
+- `apps/web` — Astro + React + Tailwind frontend, deployed on Vercel. See [apps/web/AGENTS.md](apps/web/AGENTS.md).
 - `apps/api` — Hono API on Cloudflare Workers. See [apps/api/AGENTS.md](apps/api/AGENTS.md).
 - `packages/*` — shared internal packages (none yet).
 
@@ -34,7 +34,7 @@ Run from the repo root:
 | Lint | `pnpm lint` |
 | Typecheck | `pnpm typecheck` |
 | Deploy API | `pnpm turbo run deploy --filter=@altaria/api` |
-| Deploy web | `pnpm turbo run deploy --filter=@altaria/web` |
+| Deploy web | Push to `main` (Vercel Git integration) |
 
 Add a dependency to one app with `pnpm add <pkg> --filter @altaria/<app>`. Never create a lockfile inside an app; the only lockfile is `pnpm-lock.yaml` at the root.
 
