@@ -19,7 +19,7 @@ const DRAWER_MEDIA = '(width < 64rem)';
 		{/* Astro component passed as a slot: React renders it as static HTML and never touches it */}
 		<UserButton />
 	</Sidebar>
-	<div class="lg:pl-64">
+	<div class="flex min-h-dvh flex-col lg:pl-64">
 		{/* Mobile only: from `lg` up the brand and the user menu live in the sidebar */}
 		<header class="border-b border-ink-200 bg-white lg:hidden">
 			<div class="flex h-14 items-center gap-3 px-4">
@@ -27,7 +27,7 @@ const DRAWER_MEDIA = '(width < 64rem)';
 				<a href="/" class="font-semibold tracking-tight">Altaria CRM</a>
 			</div>
 		</header>
-		<main class="px-4 py-8 lg:px-6">
+		<main class="flex flex-1 flex-col px-4 py-8 lg:px-6">
 			<slot />
 		</main>
 	</div>
