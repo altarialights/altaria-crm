@@ -1,6 +1,9 @@
 import type { Client, InValue, Row, Transaction } from '@libsql/client/web';
 import { HTTPException } from 'hono/http-exception';
-import { validId } from '../gallery/service';
+import { imageFormat, MAX_IMAGE_BYTES, validId } from '../gallery/service';
+
+type Bucket = Pick<R2Bucket, 'put' | 'get' | 'delete'>;
+type Logo = { key: string; type: string; size: number };
 
 export const CLIENT_STAGES = ['uncontacted', 'first_contact', 'meeting_scheduled', 'quote_sent', 'quote_accepted', 'project_started', 'project_finished'] as const;
 export type ClientStage = typeof CLIENT_STAGES[number];
@@ -10,7 +13,7 @@ function text(value: unknown): string {
 	return value;
 }
 function record(row: Row) {
-	return { id: text(row.id), name: text(row.name), company: text(row.company), email: text(row.email), phone: text(row.phone), website: text(row.website), notes: text(row.notes), stage: text(row.stage) as ClientStage, position: Number(row.position), version: Number(row.version), createdAt: text(row.created_at), updatedAt: text(row.updated_at) };
+	return { id: text(row.id), name: text(row.name), company: text(row.company), logoUrl: row.logo_key ? `/clientes/logo/${text(row.id)}?v=${encodeURIComponent(text(row.logo_key).split('/').pop()!)}` : null, email: text(row.email), phone: text(row.phone), website: text(row.website), notes: text(row.notes), stage: text(row.stage) as ClientStage, position: Number(row.position), version: Number(row.version), createdAt: text(row.created_at), updatedAt: text(row.updated_at) };
 }
 function inputText(value: unknown, label: string, max: number, required = false, multiline = false) {
 	if (value === undefined && !required) return '';
@@ -28,6 +31,7 @@ function version(value: unknown): number {
 function conflict(): never { throw new HTTPException(409, { message: 'Este cliente ha cambiado. Actualiza la vista antes de guardar.' }); }
 function values(input: unknown) {
 	const data = dataObject(input);
+	if (data.removeLogo !== undefined && typeof data.removeLogo !== 'boolean') throw new HTTPException(400, { message: 'La opción de quitar el logo no es válida.' });
 	const name = inputText(data.name, 'Nombre', 200, true);
 	const company = inputText(data.company, 'Empresa', 200);
 	const email = inputText(data.email, 'Email', 254);
@@ -46,7 +50,39 @@ function values(input: unknown) {
 	return { data, name, company, email, phone, website, notes, stage };
 }
 export class ClientService {
-	constructor(private readonly db: Client) {}
+	constructor(private readonly db: Client, private readonly bucket?: Bucket) {}
+	private storage() {
+		if (!this.bucket) throw new HTTPException(503, { message: 'No se pudo conectar con el almacenamiento de logos.' });
+		return this.bucket;
+	}
+	private async uploadLogo(id: string, file: File): Promise<Logo> {
+		if (!file.size || file.size > MAX_IMAGE_BYTES) throw new HTTPException(413, { message: 'El logo debe ocupar entre 1 byte y 10 MB.' });
+		const format = imageFormat(new Uint8Array(await file.slice(0, 64).arrayBuffer()));
+		if (!format) throw new HTTPException(415, { message: 'Selecciona un logo en PNG, JPEG, WebP, GIF o AVIF.' });
+		const logo = { key: `client-logos/${id}/${crypto.randomUUID()}.${format.extension}`, type: format.type, size: file.size };
+		await this.storage().put(logo.key, file, { httpMetadata: { contentType: logo.type } });
+		return logo;
+	}
+	private async cleanLogo(key: string | undefined) {
+		if (!key) return;
+		// SQL and R2 cannot share a transaction. Only delete objects that no longer
+		// belong to a committed record; cleanup errors must not undo a saved client.
+		try { await this.storage().delete(key); }
+		catch { console.error(JSON.stringify({ message: 'client logo cleanup failed', key })); }
+	}
+	private async storedLogo(id: string, db: Client | Transaction = this.db): Promise<Logo | null> {
+		const result = await db.execute({ sql: 'SELECT logo_key, logo_content_type, logo_size_bytes FROM clients WHERE id = ?', args: [validId(id)] });
+		if (!result.rows.length) throw new HTTPException(404, { message: 'El cliente ya no existe.' });
+		const row = result.rows[0];
+		return row.logo_key ? { key: text(row.logo_key), type: text(row.logo_content_type), size: Number(row.logo_size_bytes) } : null;
+	}
+	async readLogo(id: string) {
+		const logo = await this.storedLogo(id);
+		if (!logo) throw new HTTPException(404, { message: 'Este cliente no tiene logo.' });
+		const object = await this.storage().get(logo.key);
+		if (!object) throw new HTTPException(404, { message: 'No se encontró el logo.' });
+		return new Response(object.body, { headers: { 'Content-Type': logo.type, 'Content-Length': String(object.size), 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' } });
+	}
 	async list(options: { search?: string; stage?: string; page?: number; pageSize?: number; order?: string }) {
 		const page = options.page ?? 1; const pageSize = options.pageSize ?? 20;
 		if (!Number.isSafeInteger(page) || page < 1 || page > 100000 || !Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 50) throw new HTTPException(400, { message: 'Paginación no válida.' });
@@ -105,25 +141,40 @@ export class ClientService {
 		const last = await db.execute({ sql: 'SELECT max(position) AS last FROM clients WHERE stage = ? AND id <> ?', args: [stage, id] });
 		return Number(last.rows[0].last ?? 0) + 1024;
 	}
-	async create(input: unknown) {
+	async create(input: unknown, file?: File) {
 		const data = values(input); const id = crypto.randomUUID();
-		const transaction = await this.db.transaction('write');
+		if (file && data.data.removeLogo) throw new HTTPException(400, { message: 'Elige subir o quitar el logo.' });
+		const logo = file ? await this.uploadLogo(id, file) : null;
 		try {
-			const position = await this.position(transaction, data.stage, id, null);
-			await transaction.execute({ sql: 'INSERT INTO clients (id,name,company,email,phone,website,notes,stage,position) VALUES (?,?,?,?,?,?,?,?,?)', args: [id, data.name, data.company, data.email, data.phone, data.website, data.notes, data.stage, position] });
-			const result = await this.get(id, transaction); await transaction.commit(); return result;
-		} finally { transaction.close(); }
+			const transaction = await this.db.transaction('write');
+			try {
+				const position = await this.position(transaction, data.stage, id, null);
+				await transaction.execute({ sql: 'INSERT INTO clients (id,name,company,email,phone,website,notes,stage,position,logo_key,logo_content_type,logo_size_bytes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', args: [id, data.name, data.company, data.email, data.phone, data.website, data.notes, data.stage, position, logo?.key ?? null, logo?.type ?? null, logo?.size ?? null] });
+				const result = await this.get(id, transaction); await transaction.commit(); return result;
+			} finally { transaction.close(); }
+		} catch (cause) { await this.cleanLogo(logo?.key); throw cause; }
 	}
-	async update(id: string, input: unknown) {
+	async update(id: string, input: unknown, file?: File) {
 		const data = values(input); const expected = version(data.data.version);
-		const transaction = await this.db.transaction('write');
+		if (file && data.data.removeLogo) throw new HTTPException(400, { message: 'Elige subir o quitar el logo.' });
+		if ((await this.get(id)).version !== expected) conflict();
+		const logo = file ? await this.uploadLogo(id, file) : null;
+		let previous: Logo | null = null;
+		let result: Awaited<ReturnType<ClientService['get']>>;
 		try {
-			const existing = await this.get(id, transaction);
-			if (existing.version !== expected) conflict();
-			const position = existing.stage === data.stage ? existing.position : await this.position(transaction, data.stage, id, null);
-			await transaction.execute({ sql: "UPDATE clients SET name=?, company=?, email=?, phone=?, website=?, notes=?, stage=?, position=?, version=version+1, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND version=?", args: [data.name, data.company, data.email, data.phone, data.website, data.notes, data.stage, position, id, expected] });
-			const result = await this.get(id, transaction); await transaction.commit(); return result;
-		} finally { transaction.close(); }
+			const transaction = await this.db.transaction('write');
+			try {
+				const existing = await this.get(id, transaction);
+				if (existing.version !== expected) conflict();
+				if (file || data.data.removeLogo) previous = await this.storedLogo(id, transaction);
+				const position = existing.stage === data.stage ? existing.position : await this.position(transaction, data.stage, id, null);
+				await transaction.execute({ sql: "UPDATE clients SET name=?, company=?, email=?, phone=?, website=?, notes=?, stage=?, position=?, version=version+1, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND version=?", args: [data.name, data.company, data.email, data.phone, data.website, data.notes, data.stage, position, id, expected] });
+				if (file || data.data.removeLogo) await transaction.execute({ sql: 'UPDATE clients SET logo_key=?, logo_content_type=?, logo_size_bytes=? WHERE id=?', args: [logo?.key ?? null, logo?.type ?? null, logo?.size ?? null, id] });
+				result = await this.get(id, transaction); await transaction.commit();
+			} finally { transaction.close(); }
+		} catch (cause) { await this.cleanLogo(logo?.key); throw cause; }
+		await this.cleanLogo(previous?.key);
+		return result;
 	}
 	async move(id: string, input: unknown) {
 		const data = dataObject(input); const expected = version(data.version);
@@ -139,14 +190,17 @@ export class ClientService {
 	}
 	async delete(id: string, expected: number) {
 		validId(id); version(expected);
+		let logo: Logo | null;
 		const transaction = await this.db.transaction('write');
 		try {
 			const existing = await this.get(id, transaction);
 			if (existing.version !== expected) conflict();
 			const assigned = await transaction.execute({ sql: 'SELECT id FROM cards WHERE client_id = ? LIMIT 1', args: [id] });
 			if (assigned.rows.length) throw new HTTPException(409, { message: 'Este cliente tiene tarjetas asignadas. Libéralas o asígnalas a otro cliente antes de eliminarlo.' });
+			logo = await this.storedLogo(id, transaction);
 			await transaction.execute({ sql: 'DELETE FROM clients WHERE id = ? AND version = ?', args: [id, expected] });
 			await transaction.commit();
 		} finally { transaction.close(); }
+		await this.cleanLogo(logo?.key);
 	}
 }

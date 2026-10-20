@@ -9,7 +9,7 @@ export const CLIENT_STAGES = [
 ] as const;
 export type ClientStage = typeof CLIENT_STAGES[number]['id'];
 export type Client = {
-	id: string; name: string; company: string; email: string; phone: string; website: string; notes: string;
+	id: string; name: string; company: string; logoUrl: string | null; email: string; phone: string; website: string; notes: string;
 	stage: ClientStage; position: number; version: number; createdAt: string; updatedAt: string;
 };
 export type ClientListing = { clients: Client[]; total: number; page: number; pageSize: number };

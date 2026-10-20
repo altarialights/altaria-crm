@@ -42,7 +42,7 @@ function isConstraint(error: unknown) {
 }
 
 /** Inspect the file signature rather than trusting its filename or browser MIME type. */
-function imageFormat(bytes: Uint8Array): { type: string; extension: string } | null {
+export function imageFormat(bytes: Uint8Array): { type: string; extension: string } | null {
 	const ascii = (start: number, length: number) => String.fromCharCode(...bytes.subarray(start, start + length));
 	if (bytes.length >= 8 && bytes[0] === 137 && ascii(1, 3) === 'PNG' && bytes[4] === 13 && bytes[5] === 10 && bytes[6] === 26 && bytes[7] === 10) return { type: 'image/png', extension: 'png' };
 	if (bytes.length >= 3 && bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255) return { type: 'image/jpeg', extension: 'jpg' };
