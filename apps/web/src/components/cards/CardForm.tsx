@@ -28,7 +28,7 @@ export default function CardForm({ card, request, galleryRequest, onClose, onSav
 		<form onSubmit={(event) => { event.preventDefault(); void save(); }} className="p-6">
 			<fieldset disabled={busy} className="space-y-5 disabled:opacity-60">
 				<div className="grid gap-5 sm:grid-cols-2">
-					<label className="space-y-2 text-sm font-medium"><span className="block">Referencia</span><input autoFocus required maxLength={100} value={reference} onChange={(event) => setReference(event.target.value)} placeholder="Por ejemplo, Tarjeta 001" className={fieldClass} /></label>
+					<label className="space-y-2 text-sm font-medium"><span className="block">Nombre</span><input autoFocus required maxLength={100} value={reference} onChange={(event) => setReference(event.target.value)} placeholder="Por ejemplo, Tarjeta de Ana" className={fieldClass} /></label>
 					<label className="space-y-2 text-sm font-medium"><span className="block">Estado</span><select value={status} onChange={(event) => setStatus(event.target.value as CardStatus)} className={fieldClass}><option value="free">Libre, sin asignar</option><option value="active">Activa</option><option value="paused">Pausada</option></select></label>
 				</div>
 				{status !== 'free' ? <div className="grid gap-5 sm:grid-cols-2">

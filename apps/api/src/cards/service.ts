@@ -49,7 +49,7 @@ export class CardService {
 	private async values(input: unknown, publicUrl: string) {
 		if (!input || typeof input !== 'object') throw new HTTPException(400, { message: 'Datos de tarjeta no válidos.' });
 		const data = input as Record<string, unknown>;
-		const reference = field(data.reference, 'Referencia', 100, true);
+		const reference = field(data.reference, 'Nombre', 100, true);
 		if (!isStatus(data.status)) throw new HTTPException(400, { message: 'Estado no válido.' });
 		const clientName = data.status === 'free' ? '' : field(data.clientName, 'Cliente', 200, true);
 		let targetUrl = data.status === 'free' ? '' : field(data.targetUrl, 'URL de destino', 2048, true);
@@ -73,7 +73,7 @@ export class CardService {
 		return [reference, clientName, targetUrl, designId, data.status] satisfies InValue[];
 	}
 	private writeError(error: unknown): never {
-		if (error instanceof Error && 'code' in error && String(error.code).startsWith('SQLITE_CONSTRAINT') && error.message.includes('cards.reference')) throw new HTTPException(409, { message: 'Ya existe una tarjeta con esa referencia.' });
+		if (error instanceof Error && 'code' in error && String(error.code).startsWith('SQLITE_CONSTRAINT') && error.message.includes('cards.reference')) throw new HTTPException(409, { message: 'Ya existe una tarjeta con ese nombre.' });
 		throw error;
 	}
 	async create(input: unknown) {
