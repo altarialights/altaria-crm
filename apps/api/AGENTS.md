@@ -31,8 +31,17 @@ Hono on Cloudflare Workers, configured in `wrangler.jsonc`. Database: Turso (lib
 - `/v1/cards` manages physical cards: create, list/search/filter, edit, pause/resume and release. There is no delete endpoint: printed QR/NFC links keep their identity.
 - `CARD_PUBLIC_ORIGIN` sets the HTTPS origin for newly created cards. Each card saves its complete `public_url`; changing the setting never rewrites existing links. Configure a custom domain on the Worker before using it here.
 - Public `/t/:id` reads the current destination on every request, returns `302` and `Cache-Control: no-store`, and never exposes customer or design metadata. Free, paused and missing cards share a generic 404 page.
-- `cards` stores customer names until the contacts/company modules exist. An optional gallery design uses `ON DELETE SET NULL`; releasing a card clears customer/destination and preserves its design and public link.
+- `cards.client_id` links registered clients; list/detail responses resolve their current names. Older text-only assignments remain valid. An optional gallery design uses `ON DELETE SET NULL`; releasing a card clears the client link/customer/destination and preserves its design and public link.
 - `pnpm --filter @altaria/api test:cards` checks assignment lifecycle, URL validation, pagination and redirects with disposable databases.
+
+## Clients
+
+- `/v1/clients` provides authenticated CRUD, search, phase filters and pagination. `/board` returns a consistent read snapshot with the first 20 clients and total count for each phase; list pages load additional cards.
+- Phases: `uncontacted`, `first_contact`, `meeting_scheduled`, `quote_sent`, `quote_accepted`, `project_started`, `project_finished`. Phase definitions live in `src/clients/service.ts` and `apps/web/src/lib/clients.ts`; keep them aligned.
+- Clients store name, company, email, phone, website, notes, phase, position and version. Names can repeat. Updates, moves and deletions require the current `version`; stale operations return 409.
+- `POST /:id/move` accepts `stage`, optional `beforeId`, and `version`. A write transaction computes a rank between neighboring clients, or appends at the actual end of the column. Rare rank compaction uses a MATERIALIZED snapshot so updates cannot reorder the source during the statement.
+- Client deletion is restricted while cards reference it. Release or reassign those cards first. Migration `0003_clients.sql` preserves existing card links and customer names.
+- `pnpm --filter @altaria/api test:clients` checks data validation, ordering/compaction, stale writes, board pagination, HTTP routes and card relationships using disposable databases.
 
 ## Development
 

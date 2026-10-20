@@ -1,0 +1,8 @@
+---
+import Clients from '../../components/clients/Clients';
+import AppLayout from '../../layouts/AppLayout.astro';
+---
+<AppLayout title="Clientes" scrollable={false}>
+	<p class="mb-2 shrink-0 text-sm text-ink-500">Clientes / Lista</p>
+	<Clients view="list" initialStage={Astro.url.searchParams.get('stage') ?? ''} client:load />
+</AppLayout>

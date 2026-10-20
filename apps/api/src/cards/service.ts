@@ -3,13 +3,13 @@ import { HTTPException } from 'hono/http-exception';
 import { validId } from '../gallery/service';
 
 export type CardStatus = 'free' | 'active' | 'paused';
-const selectCard = `SELECT c.*, i.name AS design_name FROM cards c LEFT JOIN gallery_images i ON i.id = c.design_id`;
+const selectCard = `SELECT c.*, COALESCE(cl.name, c.client_name) AS assigned_client_name, i.name AS design_name FROM cards c LEFT JOIN gallery_images i ON i.id = c.design_id LEFT JOIN clients cl ON cl.id = c.client_id`;
 function text(value: unknown): string {
 	if (typeof value !== 'string') throw new Error('Unexpected card database column type');
 	return value;
 }
 function card(row: Row) {
-	return { id: text(row.id), reference: text(row.reference), publicUrl: text(row.public_url), clientName: text(row.client_name), targetUrl: text(row.target_url), designId: row.design_id === null ? null : text(row.design_id), designName: row.design_name === null ? null : text(row.design_name), status: text(row.status) as CardStatus, createdAt: text(row.created_at), updatedAt: text(row.updated_at) };
+	return { id: text(row.id), reference: text(row.reference), publicUrl: text(row.public_url), clientName: text(row.assigned_client_name), clientId: row.client_id === null ? null : text(row.client_id), targetUrl: text(row.target_url), designId: row.design_id === null ? null : text(row.design_id), designName: row.design_name === null ? null : text(row.design_name), status: text(row.status) as CardStatus, createdAt: text(row.created_at), updatedAt: text(row.updated_at) };
 }
 function field(value: unknown, label: string, max: number, required = false) {
 	if (typeof value !== 'string' || value.length > max || [...value].some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) || (required && !value.trim())) throw new HTTPException(400, { message: `${label}: introduce un valor válido de hasta ${max} caracteres.` });
@@ -30,12 +30,12 @@ export class CardService {
 		}
 		const search = field(options.search ?? '', 'Búsqueda', 200);
 		if (search) {
-			conditions.push("(c.reference LIKE ? ESCAPE '\\' OR c.client_name LIKE ? ESCAPE '\\' OR c.target_url LIKE ? ESCAPE '\\' OR c.id LIKE ? ESCAPE '\\')");
+			conditions.push("(c.reference LIKE ? ESCAPE '\\' OR COALESCE(cl.name, c.client_name) LIKE ? ESCAPE '\\' OR c.target_url LIKE ? ESCAPE '\\' OR c.id LIKE ? ESCAPE '\\')");
 			const pattern = `%${search.replace(/[\\%_]/g, '\\$&')}%`; args.push(pattern, pattern, pattern, pattern);
 		}
 		const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
 		const result = await this.db.batch([
-			{ sql: `SELECT count(*) AS total FROM cards c${where}`, args },
+			{ sql: `SELECT count(*) AS total FROM cards c LEFT JOIN clients cl ON cl.id = c.client_id${where}`, args },
 			{ sql: `${selectCard}${where} ORDER BY c.created_at DESC, c.id DESC LIMIT ? OFFSET ?`, args: [...args, pageSize, (page - 1) * pageSize] },
 		], 'read');
 		return { cards: result[1].rows.map(card), total: Number(result[0].rows[0].total), page, pageSize };
@@ -51,7 +51,16 @@ export class CardService {
 		const data = input as Record<string, unknown>;
 		const reference = field(data.reference, 'Nombre', 100, true);
 		if (!isStatus(data.status)) throw new HTTPException(400, { message: 'Estado no válido.' });
-		const clientName = data.status === 'free' ? '' : field(data.clientName, 'Cliente', 200, true);
+		let clientName = ''; let clientId: string | null = null;
+		if (data.status !== 'free') {
+			if (data.clientId !== undefined && data.clientId !== null && data.clientId !== '') {
+				if (typeof data.clientId !== 'string') throw new HTTPException(400, { message: 'Cliente no válido.' });
+				clientId = validId(data.clientId);
+				const client = await this.db.execute({ sql: 'SELECT name FROM clients WHERE id = ?', args: [clientId] });
+				if (!client.rows.length) throw new HTTPException(400, { message: 'El cliente seleccionado ya no existe.' });
+				clientName = text(client.rows[0].name);
+			} else clientName = field(data.clientName, 'Cliente', 200, true);
+		}
 		let targetUrl = data.status === 'free' ? '' : field(data.targetUrl, 'URL de destino', 2048, true);
 		if (targetUrl) {
 			let parsed: URL;
@@ -70,10 +79,11 @@ export class CardService {
 			const design = await this.db.execute({ sql: 'SELECT id FROM gallery_images WHERE id = ?', args: [designId] });
 			if (!design.rows.length) throw new HTTPException(400, { message: 'El diseño seleccionado ya no existe.' });
 		}
-		return [reference, clientName, targetUrl, designId, data.status] satisfies InValue[];
+		return [reference, clientName, targetUrl, designId, data.status, clientId] satisfies InValue[];
 	}
 	private writeError(error: unknown): never {
 		if (error instanceof Error && 'code' in error && String(error.code).startsWith('SQLITE_CONSTRAINT') && error.message.includes('cards.reference')) throw new HTTPException(409, { message: 'Ya existe una tarjeta con ese nombre.' });
+		if (error instanceof Error && 'code' in error && String(error.code).startsWith('SQLITE_CONSTRAINT') && error.message.includes('FOREIGN KEY')) throw new HTTPException(409, { message: 'El cliente o el diseño ha cambiado. Actualiza la vista.' });
 		throw error;
 	}
 	async create(input: unknown) {
@@ -82,13 +92,13 @@ export class CardService {
 		if (origin.protocol !== 'https:' || origin.pathname !== '/' || origin.username || origin.password || origin.search || origin.hash) throw new Error('Invalid card public origin configuration');
 		const publicUrl = new URL(`/t/${id}`, origin).href;
 		const values = await this.values(input, publicUrl);
-		try { await this.db.execute({ sql: 'INSERT INTO cards (reference, client_name, target_url, design_id, status, id, public_url) VALUES (?, ?, ?, ?, ?, ?, ?)', args: [...values, id, publicUrl] }); } catch (error) { this.writeError(error); }
+		try { await this.db.execute({ sql: 'INSERT INTO cards (reference, client_name, target_url, design_id, status, client_id, id, public_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', args: [...values, id, publicUrl] }); } catch (error) { this.writeError(error); }
 		return this.get(id);
 	}
 	async update(id: string, input: unknown) {
 		const existing = await this.get(id);
 		const values = await this.values(input, existing.publicUrl);
-		try { await this.db.execute({ sql: "UPDATE cards SET reference = ?, client_name = ?, target_url = ?, design_id = ?, status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?", args: [...values, id] }); } catch (error) { this.writeError(error); }
+		try { await this.db.execute({ sql: "UPDATE cards SET reference = ?, client_name = ?, target_url = ?, design_id = ?, status = ?, client_id = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?", args: [...values, id] }); } catch (error) { this.writeError(error); }
 		return this.get(id);
 	}
 	async setStatus(id: string, input: unknown) {
@@ -100,7 +110,7 @@ export class CardService {
 	}
 	async release(id: string) {
 		validId(id);
-		await this.db.execute({ sql: "UPDATE cards SET client_name = '', target_url = '', status = 'free', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?", args: [id] });
+		await this.db.execute({ sql: "UPDATE cards SET client_name = '', client_id = NULL, target_url = '', status = 'free', updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?", args: [id] });
 		return this.get(id);
 	}
 	async destination(id: string) {

@@ -6,6 +6,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import { createDb } from './db';
 import { galleryRoutes } from './gallery/routes';
 import { createCardRoutes, createCardRedirectRoutes } from './cards/routes';
+import { createClientRoutes } from './clients/routes';
 import { parseOrigins } from './lib/origins';
 import { requireAuth } from './middleware/auth';
 import { requestBodyLimit } from './middleware/body-limit';
@@ -17,6 +18,7 @@ const v1 = new Hono<AppEnv>()
 	.use(requestBodyLimit)
 	.route('/gallery', galleryRoutes)
 	.route('/cards', createCardRoutes())
+	.route('/clients', createClientRoutes())
 	.get('/me', (c) => c.json(c.var.auth))
 	.get('/db/health', async (c) => {
 		const startedAt = Date.now();

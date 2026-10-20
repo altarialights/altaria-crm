@@ -1,6 +1,6 @@
 export type CardStatus = 'free' | 'active' | 'paused';
 export type Card = {
-	id: string; reference: string; publicUrl: string; clientName: string; targetUrl: string;
+	id: string; reference: string; publicUrl: string; clientName: string; clientId: string | null; targetUrl: string;
 	designId: string | null; designName: string | null; status: CardStatus; createdAt: string; updatedAt: string;
 };
 export type CardListing = { cards: Card[]; total: number; page: number; pageSize: number };

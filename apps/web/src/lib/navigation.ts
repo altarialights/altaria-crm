@@ -1,5 +1,5 @@
 import {
-	Building,
+	Columns3,
 	CalendarDays,
 	ChartColumn,
 	CreditCard,
@@ -52,8 +52,13 @@ export const NAV_SECTIONS: NavSection[] = [
 	{
 		title: 'Clientes',
 		items: [
-			{ label: 'Contactos', href: '/contactos', icon: Users },
-			{ label: 'Empresas', href: '/empresas', icon: Building },
+			{
+				label: 'Clientes', href: '/clientes', icon: Users,
+				children: [
+					{ label: 'Lista', href: '/clientes/lista', icon: Users, description: 'Datos y fichas de clientes' },
+					{ label: 'Fases', href: '/clientes/fases', icon: Columns3, description: 'Tablero de seguimiento' },
+				],
+			},
 		],
 	},
 	{

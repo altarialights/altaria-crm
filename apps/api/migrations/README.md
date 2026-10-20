@@ -49,3 +49,11 @@ changes; never edit an applied file. Tests use disposable in-memory databases.
 - `CARD_PUBLIC_ORIGIN` in the Worker config determines links for new cards only. Existing rows preserve `public_url`, including when the origin changes later. Keep old domains routed to the Worker while printed cards use them.
 - Management is authenticated under `/v1/cards`; public GET/HEAD `/t/:id` issues a `302` with `Cache-Control: no-store` only for active cards. Destinations accept HTTP/HTTPS without credentials and reject links back into the card redirect service.
 - Run `pnpm --filter @altaria/api test:cards` for lifecycle, HTTP and database checks. Apply the migration explicitly before deploying the new Worker.
+
+## Clients
+
+- `0003_clients.sql` adds `clients` with optional contact/company details, notes, seven fixed phases, ordering rank, optimistic version and timestamps. Names are labels and may repeat.
+- It also adds nullable `cards.client_id` with `ON DELETE RESTRICT`. Existing customer names, destinations, public URLs and physical card IDs remain untouched. Customers on older text-only assignments can be linked explicitly from the card form.
+- Linked cards show the client's current name. Releasing a card clears its client ID and customer/destination; client deletion requires releasing or reassigning linked cards first.
+- `/v1/clients` manages client records. `/v1/clients/board` returns a bounded first page per phase, and the listing loads further pages by phase and position. `/v1/clients/:id/move` persists phase/order transactionally; all updates, moves and deletions check the current client version.
+- `pnpm --filter @altaria/api test:clients` verifies validation, ordering, rank compaction, pagination, conflicts and card/client relations.
