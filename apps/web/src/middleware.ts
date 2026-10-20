@@ -25,7 +25,10 @@ export const onRequest: MiddlewareHandler = async (context, next) => {
 		return response;
 	} catch (cause) {
 		const message = cause instanceof Error ? cause.message : '';
-		const code = /publishable/i.test(message) ? 'AUTH_PUBLIC_KEY'
+		const publicKeyError = /missing/i.test(message)
+			? (!process.env.PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_PUBLISHABLE_KEY ? 'AUTH_PUBLIC_KEY_NAME' : 'AUTH_PUBLIC_KEY_MISSING')
+			: 'AUTH_PUBLIC_KEY_INVALID';
+		const code = /publishable/i.test(message) ? publicKeyError
 			: /secret.?key/i.test(message) ? 'AUTH_SECRET_KEY'
 				: /handshake/i.test(message) ? 'AUTH_HANDSHAKE'
 					: /environment|env.*variable/i.test(message) ? 'ENVIRONMENT'
