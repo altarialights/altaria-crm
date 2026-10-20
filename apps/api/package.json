@@ -13,6 +13,7 @@
     "test:gallery": "tsx --test scripts/gallery.test.js",
     "test:cards": "tsx --test scripts/cards.test.js",
     "test:clients": "tsx --test scripts/clients.test.js",
+    "test:finance": "tsx --test scripts/finance.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

@@ -12,6 +12,9 @@ import {
 	Receipt,
 	Settings,
 	Users,
+	Wallet,
+	ArrowDownLeft,
+	ArrowUpRight,
 	type LucideIcon,
 } from 'lucide-react';
 
@@ -68,6 +71,13 @@ export const NAV_SECTIONS: NavSection[] = [
 			{ label: 'Presupuestos', href: '/presupuestos', icon: FileText },
 			{ label: 'Facturas', href: '/facturas', icon: Receipt },
 		],
+	},
+	{
+		title: 'Finanzas',
+		items: [{ label: 'Finanzas', href: '/finanzas', icon: Wallet, children: [
+			{ label: 'Ingresos', href: '/finanzas/ingresos', icon: ArrowDownLeft, description: 'Cobros y previsiones' },
+			{ label: 'Gastos', href: '/finanzas/gastos', icon: ArrowUpRight, description: 'Pagos y previsiones' },
+		] }],
 	},
 	{
 		title: 'Análisis',

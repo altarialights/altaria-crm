@@ -1,0 +1,8 @@
+---
+import Finance from '../../components/finance/Finance';
+import AppLayout from '../../layouts/AppLayout.astro';
+---
+<AppLayout title="Gastos" scrollable={false}>
+	<p class="mb-2 shrink-0 text-sm text-ink-500">Finanzas / Gastos</p>
+	<Finance kind="expense" client:load />
+</AppLayout>

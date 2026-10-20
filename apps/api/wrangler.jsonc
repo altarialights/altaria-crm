@@ -4,6 +4,9 @@
   "name": "altaria-crm",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-12",
+  "triggers": {
+    "crons": ["0 1 * * *"]
+  },
   "observability": {
     "enabled": true,
     "logs": {

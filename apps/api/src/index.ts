@@ -7,6 +7,8 @@ import { createDb } from './db';
 import { galleryRoutes } from './gallery/routes';
 import { createCardRoutes, createCardRedirectRoutes } from './cards/routes';
 import { createClientRoutes } from './clients/routes';
+import { createFinanceRoutes } from './finance/routes';
+import { FinanceService } from './finance/service';
 import { parseOrigins } from './lib/origins';
 import { requireAuth } from './middleware/auth';
 import { requestBodyLimit } from './middleware/body-limit';
@@ -19,6 +21,7 @@ const v1 = new Hono<AppEnv>()
 	.route('/gallery', galleryRoutes)
 	.route('/cards', createCardRoutes())
 	.route('/clients', createClientRoutes())
+	.route('/finance', createFinanceRoutes())
 	.get('/me', (c) => c.json(c.var.auth))
 	.get('/db/health', async (c) => {
 		const startedAt = Date.now();
@@ -52,4 +55,16 @@ app.onError((err, c) => {
 
 export type AppType = typeof app;
 
-export default app;
+export default {
+	fetch: app.fetch,
+	async scheduled(_controller, bindings) {
+		const db = createDb(bindings);
+		try {
+			const generated = await new FinanceService(db, bindings.GALLERY_BUCKET).syncDue();
+			console.log(JSON.stringify({ message: 'finance recurrence generation completed', generated }));
+		} catch (cause) {
+			console.error(JSON.stringify({ message: 'finance recurrence generation failed', error: cause instanceof Error ? cause.message : 'Unknown error' }));
+			throw cause;
+		} finally { db.close(); }
+	},
+} satisfies ExportedHandler<CloudflareBindings>;

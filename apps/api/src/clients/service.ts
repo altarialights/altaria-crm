@@ -197,6 +197,8 @@ export class ClientService {
 			if (existing.version !== expected) conflict();
 			const assigned = await transaction.execute({ sql: 'SELECT id FROM cards WHERE client_id = ? LIMIT 1', args: [id] });
 			if (assigned.rows.length) throw new HTTPException(409, { message: 'Este cliente tiene tarjetas asignadas. Libéralas o asígnalas a otro cliente antes de eliminarlo.' });
+			const finances = await transaction.execute({ sql: 'SELECT id FROM finance_entries WHERE client_id=? UNION ALL SELECT id FROM finance_series WHERE client_id=? LIMIT 1', args: [id, id] });
+			if (finances.rows.length) throw new HTTPException(409, { message: 'Este cliente tiene movimientos o recurrencias asociados. Conserva su ficha para mantener el historial financiero.' });
 			logo = await this.storedLogo(id, transaction);
 			await transaction.execute({ sql: 'DELETE FROM clients WHERE id = ? AND version = ?', args: [id, expected] });
 			await transaction.commit();

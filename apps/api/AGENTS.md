@@ -8,7 +8,7 @@ Hono on Cloudflare Workers, configured in `wrangler.jsonc`. Database: Turso (lib
 - `authorizedParties` (the token's `azp` claim) and CORS both use `WEB_ORIGINS`. When the web app gets a new origin (production domain), add it there.
 - Sign-up is closed in the Clerk Dashboard (invite-only), so any valid session is a staff member. Add role/org checks here if that changes.
 - Errors: throw `HTTPException` for expected failures; anything else is logged as JSON and returned as a generic 500 — never leak internals.
-- `secureHeaders()` applies globally. After authentication, `/v1` has a 1 MB body limit, except gallery uploads and multipart client create/update requests with logos (10 MB plus bounded multipart overhead).
+- `secureHeaders()` applies globally. After authentication, `/v1` has a 1 MB body limit, except gallery uploads and multipart client/finance saves with attachments (10 MB plus bounded multipart overhead).
 
 ## Database
 
@@ -45,6 +45,16 @@ Hono on Cloudflare Workers, configured in `wrangler.jsonc`. Database: Turso (lib
 - `POST /:id/move` accepts `stage`, optional `beforeId`, and `version`. A write transaction computes a rank between neighboring clients, or appends at the actual end of the column. Rare rank compaction uses a MATERIALIZED snapshot so updates cannot reorder the source during the statement.
 - Client deletion is restricted while cards reference it. Release or reassign those cards first. Migration `0003_clients.sql` preserves existing card links and customer names.
 - `pnpm --filter @altaria/api test:clients` checks data validation, ordering/compaction, stale writes, board pagination, HTTP routes and card relationships using disposable databases.
+
+## Finance
+
+- `/v1/finance` provides authenticated entry CRUD, categories and recurring schedules. Migration `0005_finance.sql` adds `finance_categories`, `finance_series` and `finance_entries`. Amounts are positive integer EUR cents; direction is `income` or `expense`.
+- Entry status is `pending` or `settled`; settled entries require a nonfuture `paid_on`. Listing/search, client/category filters, expected-date range, status and recurrence filters apply to the list. Its summary covers both kinds under the same filters and expected dates, separating received/paid amounts from pending income/expense. Count, page and summary share a read snapshot.
+- Monthly, quarterly and yearly series keep their original day (Jan 31 → Feb 28 → Mar 31). Each due date generates a separate pending entry. The first entry can be settled; subsequent entries do not inherit payment status or attachments. End dates are inclusive; cancellation preserves existing entries. Editing affects entries generated afterward.
+- A daily Cron Trigger (`0 1 * * *`, UTC) and authenticated entry/series reads run the same bounded catch-up with dates in `Europe/Madrid`. SQL batches atomically insert occurrences and advance a versioned cursor. Concurrent cron/requests cannot duplicate entries or override edits/cancellation. Deleted entries retain their occurrence identity so they are never regenerated. Catch-up is bounded to 1,000 occurrences per call; a larger backlog returns 503 after making progress and is continued by subsequent calls.
+- Client/category deletion is restricted while finance records or schedules reference it. Deleting an entry clears its client/category/file links and excludes it from lists/totals while preserving the internal recurrence identity.
+- One optional PDF or signature-checked gallery image per entry (10 MB) uses private `GALLERY_BUCKET` keys `finance/<entry UUID>/<file UUID>.<extension>`. Multipart saves use JSON `data` plus `attachment`; `removeAttachment: true` clears the file. SQL failures clean up the new object. Replacement/deletion cleans old objects after commit; cleanup failures are logged for recovery. Downloads are authenticated, private/no-store and force attachment disposition.
+- `pnpm --filter @altaria/api test:finance` checks money/date validation, cash versus pending totals, relationships, ordering/pagination, month/leap-year boundaries, concurrent catch-up, rollback, cancellation, file compensation and HTTP routes in disposable storage.
 
 ## Development
 

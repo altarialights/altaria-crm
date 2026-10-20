@@ -60,3 +60,12 @@ changes; never edit an applied file. Tests use disposable in-memory databases.
 - `0004_client_logos.sql` adds optional `clients.logo_key`, `logo_content_type` and `logo_size_bytes`, constrained to complete metadata for supported images up to 10 MB. Existing clients have no logo.
 - Logos use `client-logos/<client UUID>/<image UUID>.<extension>` in the existing private bucket. Uploading/replacing a logo and saving client fields happen in one request; SQL failures delete the newly uploaded file. Old objects are deleted after the successful metadata commit. Failed R2 cleanup is logged with its object key for recovery.
 - `/v1/clients/:id/logo` and the authenticated web proxy `/clientes/logo/:id` stream the current image. The response's `logoUrl` changes on replacement so previews reload without caching private files.
+
+## Finance
+
+- `0005_finance.sql` adds editable categories (unique per income/expense kind), recurrence templates and individual movements. It seeds common income/expense categories. Monetary values are integer EUR cents, with pending/settled state, expected date and optional payment date, client, category, notes and private attachment metadata.
+- Templates store frequency, start/end, anchor day, last/next date, occurrence index, active flag and optimistic version. The first entry is created together with the template. A daily Worker cron and list catch-up create subsequent pending entries when due, including missed periods. Unique `(series_id, occurrence_index)` and guarded cursor updates in the same SQL batch make concurrent generation idempotent.
+- End dates are inclusive. Editing/cancelling a template preserves all generated movements. Deletion excludes a movement from lists/summaries and clears external references/files while retaining a tombstone for its occurrence, preventing regeneration.
+- Client/category references are restricted to preserve financial history. Categories are renamed in place; names in lists resolve their current value.
+- Attachments use the existing bucket under `finance/<entry UUID>/<file UUID>.<extension>`, outside the gallery. PDF and supported image signatures are validated up to 10 MB. Download routes `/v1/finance/entries/:id/file` and `/finanzas/archivo/:id` remain private and force file download.
+- Apply the migration before deploying the Worker with its recurrence cron. Run `pnpm --filter @altaria/api test:finance` for disposable database and bucket checks.
