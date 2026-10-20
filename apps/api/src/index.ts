@@ -5,6 +5,7 @@ import { HTTPException } from 'hono/http-exception';
 import { secureHeaders } from 'hono/secure-headers';
 import { createDb } from './db';
 import { galleryRoutes } from './gallery/routes';
+import { createCardRoutes, createCardRedirectRoutes } from './cards/routes';
 import { parseOrigins } from './lib/origins';
 import { requireAuth } from './middleware/auth';
 import { requestBodyLimit } from './middleware/body-limit';
@@ -15,6 +16,7 @@ const v1 = new Hono<AppEnv>()
 	.use(requireAuth)
 	.use(requestBodyLimit)
 	.route('/gallery', galleryRoutes)
+	.route('/cards', createCardRoutes())
 	.get('/me', (c) => c.json(c.var.auth))
 	.get('/db/health', async (c) => {
 		const startedAt = Date.now();
@@ -33,6 +35,7 @@ const app = new Hono<AppEnv>()
 		}),
 	)
 	.get('/health', (c) => c.json({ status: 'ok' }))
+	.route('/t', createCardRedirectRoutes())
 	.route('/v1', v1);
 
 app.notFound((c) => c.json({ error: 'Not Found' }, 404));

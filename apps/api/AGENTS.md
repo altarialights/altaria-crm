@@ -4,7 +4,7 @@ Hono on Cloudflare Workers, configured in `wrangler.jsonc`. Database: Turso (lib
 
 ## Security model
 
-- `GET /health` is the only public route. Everything under `/v1` goes through `requireAuth` ([src/middleware/auth.ts](src/middleware/auth.ts)), which verifies the Clerk session token from `Authorization: Bearer <token>` and sets `c.var.auth` (`userId`, `sessionId`, `orgId`). Mount new routes on the `v1` app so they inherit it.
+- `GET /health` and `GET`/`HEAD /t/:id` are public. The card link returns a temporary redirect or a generic unavailable page. Everything under `/v1` goes through `requireAuth` ([src/middleware/auth.ts](src/middleware/auth.ts)), which verifies the Clerk session token from `Authorization: Bearer <token>` and sets `c.var.auth` (`userId`, `sessionId`, `orgId`). Mount management routes on the `v1` app so they inherit it.
 - `authorizedParties` (the token's `azp` claim) and CORS both use `WEB_ORIGINS`. When the web app gets a new origin (production domain), add it there.
 - Sign-up is closed in the Clerk Dashboard (invite-only), so any valid session is a staff member. Add role/org checks here if that changes.
 - Errors: throw `HTTPException` for expected failures; anything else is logged as JSON and returned as a generic 500 — never leak internals.
@@ -25,6 +25,14 @@ Hono on Cloudflare Workers, configured in `wrangler.jsonc`. Database: Turso (lib
 - `/v1/gallery` implements folder CRUD, image listing/search/pagination, uploads, renaming, deletion and authenticated image streaming. Files are limited to 10 MB and checked by signature. Nonempty folders cannot be deleted.
 - R2 uploads precede SQL insertion; insertion failures delete the newly uploaded object. Image deletion removes R2 first, preserving the record on R2 failure so it can be retried. SQL and R2 have no shared transaction.
 - Run `pnpm --filter @altaria/api test:gallery` for service and HTTP route integration checks using disposable databases and an in-memory bucket.
+
+## Card assignments
+
+- `/v1/cards` manages physical cards: create, list/search/filter, edit, pause/resume and release. There is no delete endpoint: printed QR/NFC links keep their identity.
+- `CARD_PUBLIC_ORIGIN` sets the HTTPS origin for newly created cards. Each card saves its complete `public_url`; changing the setting never rewrites existing links. Configure a custom domain on the Worker before using it here.
+- Public `/t/:id` reads the current destination on every request, returns `302` and `Cache-Control: no-store`, and never exposes customer or design metadata. Free, paused and missing cards share a generic 404 page.
+- `cards` stores customer names until the contacts/company modules exist. An optional gallery design uses `ON DELETE SET NULL`; releasing a card clears customer/destination and preserves its design and public link.
+- `pnpm --filter @altaria/api test:cards` checks assignment lifecycle, URL validation, pagination and redirects with disposable databases.
 
 ## Development
 

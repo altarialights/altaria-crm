@@ -38,6 +38,7 @@ Colors and font come from the brand site, altarialights.com. The tokens live in 
 - Clerk's `UserButton` is the Astro component passed into the sidebar as a slot (React can't render Astro components, and the slot is never re-rendered by React).
 - Islands that share state use nanostores ([src/stores/](src/stores/)), e.g. the drawer's open state between `SidebarToggle` and `Sidebar`.
 - The gallery (`src/components/gallery/`) is a React island on `/tarjetas/galeria`. It uses authenticated `/v1/gallery` calls; `/tarjetas/archivo/[id].ts` proxies private images with a fresh server-side Clerk token so native `<img>` and downloads work without exposing tokens in URLs.
+- Assignments (`src/components/cards/`) uses `/v1/cards` and paginates to the available table height. Cards have saved permanent public URLs; QR generation uses that URL, never the editable destination. `qrcode` is loaded on demand in the browser for PNG/SVG export and a large/fullscreen preview. No QR generation request is sent to an external service.
 
 ## Configuration
 

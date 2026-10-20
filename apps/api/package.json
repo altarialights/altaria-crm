@@ -11,6 +11,7 @@
     "db:migrate": "node --env-file-if-exists=.dev.vars scripts/migrate.js",
     "test:db": "node --test scripts/migrate.test.js",
     "test:gallery": "tsx --test scripts/gallery.test.js",
+    "test:cards": "tsx --test scripts/cards.test.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

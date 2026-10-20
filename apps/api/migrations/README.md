@@ -39,5 +39,13 @@ changes; never edit an applied file. Tests use disposable in-memory databases.
   `/tarjetas/galeria`. The web image endpoint `/tarjetas/archivo/:id` streams files
   with a fresh Clerk token; image URLs do not expose tokens or public R2 access.
 - Uploads accept JPEG, PNG, WebP, GIF and AVIF up to 10 MB per image. Renaming a
-  design changes metadata only. Listing is paginated at 24 images per page.
-- Assignment tables remain pending implementation.
+  design changes metadata only. Listing accepts 1–24 images per page.
+
+## Card assignments
+
+- `0002_card_assignments.sql` adds `cards`: one permanent UUID/link for each physical card, reference, customer name, destination, optional gallery design, state and timestamps.
+- States are `free`, `active`, `paused`. Active/paused cards require a customer and destination. Free cards have neither. Releasing preserves the ID, public URL and design.
+- Design deletion sets `design_id` to NULL. It never removes a physical card or its destination.
+- `CARD_PUBLIC_ORIGIN` in the Worker config determines links for new cards only. Existing rows preserve `public_url`, including when the origin changes later. Keep old domains routed to the Worker while printed cards use them.
+- Management is authenticated under `/v1/cards`; public GET/HEAD `/t/:id` issues a `302` with `Cache-Control: no-store` only for active cards. Destinations accept HTTP/HTTPS without credentials and reject links back into the card redirect service.
+- Run `pnpm --filter @altaria/api test:cards` for lifecycle, HTTP and database checks. Apply the migration explicitly before deploying the new Worker.

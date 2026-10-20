@@ -11,7 +11,7 @@ test('gallery supports empty folders, stable prefixes and images with enforced r
 	const db = createClient({ url: 'file::memory:' });
 	try {
 		await db.execute('PRAGMA foreign_keys = ON');
-		assert.deepEqual(await applyMigrations(db), ['0001_card_gallery.sql']);
+		assert.deepEqual(await applyMigrations(db), ['0001_card_gallery.sql', '0002_card_assignments.sql']);
 		assert.deepEqual(await applyMigrations(db), []);
 		await db.execute("INSERT INTO gallery_folders (id, name, storage_prefix) VALUES ('folder-1', 'Restaurantes', 'restaurantes')");
 		await db.execute("INSERT INTO gallery_folders (id, name, storage_prefix) VALUES ('folder-2', 'Peluquerías', 'peluquerias')");
