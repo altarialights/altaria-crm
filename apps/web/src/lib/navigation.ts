@@ -1,16 +1,8 @@
 import {
 	Columns3,
-	CalendarDays,
-	ChartColumn,
 	CreditCard,
-	FileText,
 	Images,
-	Handshake,
-	House,
-	ListTodo,
 	Link,
-	Receipt,
-	Settings,
 	Users,
 	Wallet,
 	ArrowDownLeft,
@@ -33,14 +25,11 @@ export interface NavSection {
 	items: NavItem[];
 }
 
-// Sample entries to preview the design: most of these routes don't exist yet
+// Only implemented sections belong in the navigation.
 export const NAV_SECTIONS: NavSection[] = [
 	{
 		title: 'General',
 		items: [
-			{ label: 'Inicio', href: '/', icon: House },
-			{ label: 'Calendario', href: '/calendario', icon: CalendarDays },
-			{ label: 'Tareas', href: '/tareas', icon: ListTodo, badge: 3 },
 			{
 				label: 'Tarjetas',
 				href: '/tarjetas',
@@ -65,28 +54,13 @@ export const NAV_SECTIONS: NavSection[] = [
 		],
 	},
 	{
-		title: 'Ventas',
-		items: [
-			{ label: 'Oportunidades', href: '/oportunidades', icon: Handshake },
-			{ label: 'Presupuestos', href: '/presupuestos', icon: FileText },
-			{ label: 'Facturas', href: '/facturas', icon: Receipt },
-		],
-	},
-	{
 		title: 'Finanzas',
 		items: [{ label: 'Finanzas', href: '/finanzas', icon: Wallet, children: [
 			{ label: 'Ingresos', href: '/finanzas/ingresos', icon: ArrowDownLeft, description: 'Cobros y previsiones' },
 			{ label: 'Gastos', href: '/finanzas/gastos', icon: ArrowUpRight, description: 'Pagos y previsiones' },
 		] }],
 	},
-	{
-		title: 'Análisis',
-		items: [{ label: 'Informes', href: '/informes', icon: ChartColumn }],
-	},
 ];
-
-// Pinned to the bottom of the sidebar
-export const NAV_FOOTER: NavItem[] = [{ label: 'Configuración', href: '/configuracion', icon: Settings }];
 
 /** Whether `href` is the current section: exact match for `/`, prefix match for the rest */
 export function isActivePath(currentPath: string, href: string): boolean {

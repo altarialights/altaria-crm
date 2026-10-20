@@ -20,7 +20,7 @@
   },
   "vars": {
     // Origins of the web app (comma-separated): allowed by CORS and accepted as Clerk authorized parties
-    "WEB_ORIGINS": "http://localhost:4321",
+    "WEB_ORIGINS": "http://localhost:4321,https://altaria-crm.vercel.app",
     // Used only for newly created cards; existing cards keep their saved URL.
     "CARD_PUBLIC_ORIGIN": "https://altaria-crm.altarialights.workers.dev"
   },

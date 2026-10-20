@@ -3,7 +3,7 @@ import { ChevronRight, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
-import { NAV_FOOTER, NAV_SECTIONS, isActivePath, type NavItem } from '../lib/navigation';
+import { NAV_SECTIONS, isActivePath, type NavItem } from '../lib/navigation';
 import { isSidebarOpen } from '../stores/sidebar';
 
 interface Props {
@@ -82,13 +82,6 @@ export default function Sidebar({ currentPath, children }: Props) {
 						</div>
 					))}
 
-					<ul className="mt-auto space-y-0.5 border-t border-ink-200 pt-4">
-						{NAV_FOOTER.map((item) => (
-							<li key={item.href}>
-								<NavLink item={item} currentPath={currentPath} />
-							</li>
-						))}
-					</ul>
 				</nav>
 			</aside>
 		</>

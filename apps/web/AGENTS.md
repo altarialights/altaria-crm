@@ -33,6 +33,7 @@ Colors and font come from the brand site, altarialights.com. The tokens live in 
 ## Layout and navigation
 
 - [src/layouts/AppLayout.astro](src/layouts/AppLayout.astro) is the authenticated shell: sidebar on the left (fixed from `lg` up, drawer below), content on the right. Add menu entries in [src/lib/navigation.ts](src/lib/navigation.ts).
+- Navigation exposes implemented sections only: Cards, Clients and Finance with their submenus. `/` redirects to `/clientes/lista`; do not add placeholder links or counters for unimplemented features.
 - The sidebar is a React component hydrated with `client:load` for desktop flyouts and the mobile drawer. The toggle is hydrated only below `lg` (`client:media`). The active item is resolved on the server from `Astro.url.pathname`.
 - Menu entries can have `children`: they open in a flyout on desktop hover, click or keyboard, and inline on mobile. Desktop panels are portalled outside the scrollable navigation to prevent clipping.
 - Clerk's `UserButton` is the Astro component passed into the sidebar as a slot (React can't render Astro components, and the slot is never re-rendered by React).

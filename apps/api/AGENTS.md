@@ -6,6 +6,7 @@ Hono on Cloudflare Workers, configured in `wrangler.jsonc`. Database: Turso (lib
 
 - `GET /health` and `GET`/`HEAD /t/:id` are public. The card link returns a temporary redirect or a generic unavailable page. Everything under `/v1` goes through `requireAuth` ([src/middleware/auth.ts](src/middleware/auth.ts)), which verifies the Clerk session token from `Authorization: Bearer <token>` and sets `c.var.auth` (`userId`, `sessionId`, `orgId`). Mount management routes on the `v1` app so they inherit it.
 - `authorizedParties` (the token's `azp` claim) and CORS both use `WEB_ORIGINS`. When the web app gets a new origin (production domain), add it there.
+- Current allowed web origins: `http://localhost:4321` and production `https://altaria-crm.vercel.app`. Preview URLs are not implicitly trusted.
 - Sign-up is closed in the Clerk Dashboard (invite-only), so any valid session is a staff member. Add role/org checks here if that changes.
 - Errors: throw `HTTPException` for expected failures; anything else is logged as JSON and returned as a generic 500 — never leak internals.
 - `secureHeaders()` applies globally. After authentication, `/v1` has a 1 MB body limit, except gallery uploads and multipart client/finance saves with attachments (10 MB plus bounded multipart overhead).
